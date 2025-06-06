@@ -1,0 +1,648 @@
+<!-- Create new file materials.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Learning Materials - VisioLearn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Base Styles from previous page */
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --neon: #00ff88;
+            --glow: 0 0 30px rgba(0,255,136,0.3);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        /* Material Dashboard Styles */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .upload-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            margin-bottom: 3rem;
+        }
+
+        .upload-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border: 2px dashed var(--neon);
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input:hover {
+            background: rgba(0,255,136,0.1);
+        }
+
+        .category-select {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            appearance: none;
+        }
+
+        .deadline-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 10px;
+            color: white;
+        }
+
+        .material-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .material-card {
+        position: relative;
+        background: linear-gradient(145deg, 
+            rgba(255,255,255,0.05), 
+            rgba(255,255,255,0.01));
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: var(--glow);
+            padding: 1.5rem;
+            border-radius: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .material-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(400px circle at var(--x) var(--y),
+            rgba(0,255,136,0.1),
+            transparent 40%);
+        opacity: 0;
+        transition: opacity 0.4s;
+    }
+
+    .material-card:hover::before {
+        opacity: 1;
+    }
+
+    .material-card.entering {
+        animation: cardEnter 0.6s ease-out;
+    }
+
+    @keyframes cardEnter {
+        0% {
+            transform: translateY(50px) scale(0.9);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+    }
+
+        
+
+        
+
+        .material-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .material-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .material-type {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--neon);
+            color: var(--dark);
+        }
+
+        .progress-bar {
+            width: 150px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--neon);
+            transition: width 0.3s ease;
+        }
+
+        /* Interactive Elements */
+        .upload-button {
+            background: var(--neon);
+            color: var(--dark);
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0,255,136,0.3);
+        }
+         /* Add to existing styles */
+    .material-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .delete-btn {
+        background: rgba(255, 75, 75, 0.2);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        color: #ff4b4b;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+     .delete-btn::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+            transparent,
+            rgba(255,75,75,0.3),
+            transparent);
+        animation: shine 1.5s infinite;
+    }
+
+    @keyframes shine {
+        0% { transform: translateX(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) rotate(45deg); }
+    }
+
+    .floating {
+        animation: float 4s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+
+    .delete-btn:hover {
+        background: rgba(255, 75, 75, 0.3);
+        transform: scale(1.1);
+    }
+    /* Add these new styles */
+    .edit-btn {
+        background: rgba(255, 165, 0, 0.2);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        color: #ffa500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+      .edit-btn::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg,
+            transparent,
+            rgba(255, 165, 0, 0.3),
+            transparent);
+        animation: shine 1.5s infinite;
+    }
+
+    .edit-btn:hover {
+        background: rgba(255, 165, 0, 0.3);
+        transform: scale(1.1);
+    }
+
+    .edit-mode .material-info input,
+    .edit-mode .material-info select {
+        background: rgba(255,255,255,0.15);
+        border: 2px solid var(--neon);
+        padding: 0.8rem;
+        width: 100%;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border-radius: 5px;
+        color: white;
+    }
+
+    .edit-mode .material-info input:hover,
+    .edit-mode .material-info select:hover {
+        transform: scale(1.02);
+    }
+
+    .edit-mode .material-info input[type="date"] {
+        padding: 0.3rem;
+    }
+
+    .edit-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="dashboard-header">
+            <h1>My Learning Materials</h1>
+            <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-plus"></i> Add New Material
+            </button>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="upload-card" id="uploadSection" style="display: none;">
+            <form class="upload-form" id="uploadForm">
+                <div class="form-group">
+                    <input type="file" id="fileInput" class="file-input" 
+                           accept="image/*, .pdf, .doc, .docx, .txt" required>
+                </div>
+                
+                <div class="form-group">
+                    <select class="category-select" id="materialType" >
+                        <option value="">Select Content Type</option>
+                        <option value="theory">Theory</option>
+                        <option value="diagram">Diagrammatic</option>
+                        <option value="problem">Problematic</option>
+                        <option value="code">Programming</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <input type="date" class="deadline-input" id="deadline" >
+                </div>
+
+                <button type="submit" class="upload-button">Upload Material</button>
+            </form>
+        </div>
+
+        <!-- Materials List -->
+        <div class="material-list" id="materialList">
+            <!-- Sample Material -->
+            <div class="material-card">
+                <div class="material-info">
+                    <div class="material-type">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div>
+                        <h3 class="material-title">Physics Theory</h3>
+                        <p>Type: <span class="material-type-label">THEORY</span></p>
+                        <p>Deadline: <span class="material-deadline">2023-12-15</span></p>
+                    </div>
+                </div>
+                <div class="material-actions">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 75%"></div>
+                    </div>
+                    <button class="edit-btn" onclick="toggleEditMode(this)">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" onclick="deleteMaterial(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+    </div>
+
+    <script>
+
+          let materials = JSON.parse(localStorage.getItem('materials')) || [];
+
+    // Save materials to localStorage
+    function saveMaterials() {
+        localStorage.setItem('materials', JSON.stringify(materials));
+    }
+
+        // Upload Form Toggle
+        document.querySelector('.upload-button').addEventListener('click', () => {
+            const uploadSection = document.getElementById('uploadSection');
+            uploadSection.style.display = uploadSection.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // File Upload Handling
+        document.getElementById('uploadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('fileInput');
+            const materialType = document.getElementById('materialType');
+            const deadline = document.getElementById('deadline');
+            
+            if (!fileInput.files[0] || !materialType.value || !deadline.value) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            // Create new material card
+            const materialList = document.getElementById('materialList');
+            const newMaterial = document.createElement('div');
+            newMaterial.className = 'material-card';
+    newMaterial.innerHTML = `
+        <div class="material-info">
+            <div class="material-type">
+                ${getTypeIcon(materialType.value)}
+            </div>
+            <div>
+                <h3 class="material-title">${fileInput.files[0].name}</h3>
+                <p>Type: <span class="material-type-label">${materialType.value.toUpperCase()}</span></p>
+                <p>Deadline: <span class="material-deadline">${deadline.value}</span></p>
+            </div>
+        </div>
+        <div class="material-actions">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: 0%"></div>
+            </div>
+            <button class="edit-btn" onclick="toggleEditMode(this)">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="delete-btn" onclick="deleteMaterial(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+            materialList.prepend(newMaterial);
+            
+            // Animate progress bar
+            setTimeout(() => {
+                newMaterial.querySelector('.progress-fill').style.width = '30%';
+            }, 100);
+
+            // Reset form
+            document.getElementById('uploadForm').reset();
+            document.getElementById('uploadSection').style.display = 'none';
+        });
+
+        function getTypeIcon(type) {
+            const icons = {
+                theory: '<i class="fas fa-book"></i>',
+                diagram: '<i class="fas fa-project-diagram"></i>',
+                problem: '<i class="fas fa-calculator"></i>',
+                code: '<i class="fas fa-code"></i>'
+            };
+            return icons[type] || '<i class="fas fa-file"></i>';
+        }
+
+        // Drag & Drop Functionality
+        const fileInput = document.getElementById('fileInput');
+        const uploadCard = document.querySelector('.upload-card');
+
+        uploadCard.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadCard.style.background = rgba(0,255,136,0.1);
+        });
+
+        uploadCard.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.files = e.dataTransfer.files;
+            uploadCard.style.background = '';
+        });
+
+        // Add this delete function
+   function deleteMaterial(button) {
+        const card = button.closest('.material-card');
+        const materialId = parseInt(card.dataset.id);
+        
+        materials = materials.filter(m => m.id !== materialId);
+        saveMaterials();
+        
+        card.style.transform = 'translateX(100%)';
+        card.style.opacity = '0';
+        setTimeout(() => card.remove(), 300);
+    }
+
+    function toggleEditMode(button) {
+        const card = button.closest('.material-card');
+        const isEditing = card.classList.contains('edit-mode');
+
+        if (!isEditing) {
+            const title = card.querySelector('.material-title');
+            const type = card.querySelector('.material-type-label');
+            const deadline = card.querySelector('.material-deadline');
+            
+            // Store original values
+            card.dataset.original = JSON.stringify({
+                title: title.textContent,
+                type: type.textContent.toLowerCase(),
+                deadline: deadline.textContent
+            });
+
+            // Create editable fields
+            title.innerHTML = `<input type="text" value="${title.innerText}" class="edit-title" autofocus>`;
+            type.innerHTML = `
+                <select class="edit-type">
+                    <option value="theory" ${type.innerText === 'THEORY' ? 'selected' : ''}>Theory</option>
+                    <option value="diagram" ${type.innerText === 'DIAGRAM' ? 'selected' : ''}>Diagrammatic</option>
+                    <option value="problem" ${type.innerText === 'PROBLEM' ? 'selected' : ''}>Problematic</option>
+                    <option value="code" ${type.innerText === 'CODE' ? 'selected' : ''}>Programming</option>
+                </select>
+            `;
+
+            deadline.innerHTML = `<input type="date" value="${deadline.textContent}" class="edit-deadline">`;
+
+            // Add action buttons
+            const editActions = document.createElement('div');
+            editActions.className = 'edit-actions';
+            editActions.innerHTML = `
+                <button class="upload-button" onclick="saveChanges(this)">Save</button>
+                <button class="delete-btn" onclick="cancelEdit(this)">Cancel</button>
+            `;
+            card.querySelector('.material-info').appendChild(editActions);
+
+            card.classList.add('edit-mode');
+
+               // Add keyboard shortcut
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') saveChanges(button);
+                if (e.key === 'Escape') cancelEdit(button);
+            });
+
+
+        }
+    }
+
+    function saveChanges(button) {
+        const card = button.closest('.material-card');
+        const materialId = parseInt(card.dataset.id);
+        const material = materials.find(m => m.id === materialId);
+
+        // Update material data
+        material.filename = card.querySelector('.edit-title').value;
+        material.type = card.querySelector('.edit-type').value;
+        material.deadline = card.querySelector('.edit-deadline').value;
+
+          // Update icon
+        card.querySelector('.material-type').innerHTML = getTypeIcon(material.type);
+
+        saveMaterials();
+        renderMaterials();
+    }
+
+     function renderMaterials() {
+        const materialList = document.getElementById('materialList');
+        materialList.innerHTML = materials.map(material => `
+            <div class="material-card entering" data-id="${material.id}">
+                <div class="material-info">
+                    <div class="material-type floating">
+                        ${getTypeIcon(material.type)}
+                    </div>
+                    <div>
+                        <h3 class="material-title">${material.filename}</h3>
+                        <p>Type: <span class="material-type-label">${material.type.toUpperCase()}</span></p>
+                        <p>Deadline: <span class="material-deadline">${material.deadline}</span></p>
+                        ${material.image ? `<img src="${material.image}" class="captured-image">` : ''}
+                    </div>
+                </div>
+                <div class="material-actions">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${material.progress}%"></div>
+                    </div>
+                    <button class="edit-btn" onclick="toggleEditMode(this)">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" onclick="deleteMaterial(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    
+    // Initialize materials on load
+    window.addEventListener('DOMContentLoaded', () => {
+        const newMaterialData = JSON.parse(localStorage.getItem('newCameraMaterial'));
+        if (newMaterialData) {
+            addCameraMaterial(newMaterialData);
+            localStorage.removeItem('newCameraMaterial');
+        }
+        renderMaterials();
+    });
+
+     document.addEventListener('mousemove', (e) => {
+        document.querySelectorAll('.material-card').forEach(card => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--x', e.clientX - rect.left + 'px');
+            card.style.setProperty('--y', e.clientY - rect.top + 'px');
+        });
+    });
+
+
+    function cancelEdit(button) {
+        const card = button.closest('.material-card');
+        const original = JSON.parse(card.dataset.original);
+
+        // Restore original values
+        card.querySelector('.material-title').innerHTML = original.title;
+        card.querySelector('.material-type-label').innerHTML = original.type;
+        card.querySelector('.material-deadline').innerHTML = original.deadline;
+
+        card.classList.remove('edit-mode');
+        card.querySelector('.edit-actions').remove();
+    }
+
+    // adding the new material from instant camera 
+
+window.addEventListener('DOMContentLoaded', () => {
+    // Check for new material from camera
+    const newMaterialData = localStorage.getItem('newMaterial');
+    if (newMaterialData) {
+        const data = JSON.parse(newMaterialData);
+        addCameraMaterial(data);
+        //localStorage.removeItem('newMaterial');
+    }
+});
+
+function addCameraMaterial(data) {
+        const newMaterial = {
+            id: Date.now(),
+            ...data,
+            progress: 30,
+            createdAt: new Date().toISOString()
+        };
+        
+        materials.unshift(newMaterial);
+        saveMaterials();
+        renderMaterials();
+    }
+    </script>
+</body>
+</html>

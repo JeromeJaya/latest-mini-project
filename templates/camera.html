@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Capture - VisioLearn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --neon: #00ff88;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .camera-container {
+            width: 100%;
+            height: 60vh;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            margin: 2rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #camera-view {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .capture-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--neon);
+            border: 5px solid white;
+            cursor: pointer;
+            margin: 1rem auto;
+        }
+
+        .result-section {
+            display: none;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .extracted-text {
+            background: rgba(255,255,255,0.1);
+            padding: 1.5rem;
+            border-radius: 15px;
+            min-height: 150px;
+            text-align: left;
+            margin: 1rem 0;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-btn {
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .learn-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .add-btn {
+            background: var(--neon);
+            color: var(--dark);
+        }
+
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instant Text Capture</h1>
+        <p>Point your camera at study materials to capture text</p>
+
+        <div class="camera-container">
+            <video id="camera-view" autoplay playsinline></video>
+            <div id="loading" class="loading" style="display: none;">
+                <div>Processing your image...</div>
+            </div>
+        </div>
+
+        <button class="capture-btn" id="capture-btn"></button>
+
+        <div class="result-section" id="result-section">
+            <h3>Extracted Content</h3>
+            <div class="extracted-text" id="extracted-text">
+                <!-- AI extracted text will appear here -->
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn learn-btn" id="learn-btn">
+                    <i class="fas fa-bolt"></i> Learn Instant
+                </button>
+                <button class="action-btn add-btn" id="add-btn">
+                    <i class="fas fa-plus"></i> Add to Study Material
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Camera elements
+        const cameraView = document.getElementById('camera-view');
+        const captureBtn = document.getElementById('capture-btn');
+        const resultSection = document.getElementById('result-section');
+        const extractedText = document.getElementById('extracted-text');
+        const loading = document.getElementById('loading');
+        
+        // Store captured image data
+        let capturedImage = null;
+        let extractedContent = "";
+
+        function redirect(page){
+            window.location.href = page;
+        }
+
+        // Start camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                cameraView.srcObject = stream;
+            } catch (err) {
+                console.error("Camera error: ", err);
+                alert("Could not access camera. Please enable camera permissions.");
+            }
+        }
+
+        // Capture image
+        captureBtn.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = cameraView.videoWidth;
+            canvas.height = cameraView.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraView, 0, 0, canvas.width, canvas.height);
+            
+            capturedImage = canvas.toDataURL('image/jpeg');
+            
+            // Show loading
+            loading.style.display = 'flex';
+            
+            // Simulate AI processing (replace with actual API call)
+            setTimeout(() => {
+                processImage(canvas);
+            }, 2000);
+        });
+
+        // Process image with AI (mock implementation)
+        function processImage(canvas) {
+            // In a real app, you would send the image to your backend API
+            // For demo purposes, we'll use mock text
+            extractedContent = `a girl with flower in her big opened mouth`;
+            
+            // Hide loading and show results
+            loading.style.display = 'none';
+            resultSection.style.display = 'block';
+            extractedText.innerHTML = extractedContent.replace(/\n/g, '<br>');
+            
+            // Stop camera stream
+            const stream = cameraView.srcObject;
+            stream.getTracks().forEach(track => track.stop());
+        }
+
+        // Action buttons
+        document.getElementById('learn-btn').addEventListener('click', () => {
+          redirect("imagegen AI .html")
+           const materialData = {
+            id: Date.now(),
+            image: capturedImage,
+            content: extractedContent,
+            filename: `capture-${Date.now()}.jpg`,
+            type: 'theory',
+            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            progress: 30
+        };
+        
+         localStorage.setItem('newCameraMaterial', JSON.stringify(materialData));
+            // In real app, this would open a learning interface
+        });
+
+        document.getElementById('add-btn').addEventListener('click', () => {
+        const materialData = {
+            id: Date.now(),
+            image: capturedImage,
+            content: extractedContent,
+            filename: `capture-${Date.now()}.jpg`,
+            type: 'theory',
+            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            progress: 30
+        };
+        
+         localStorage.setItem('newCameraMaterial', JSON.stringify(materialData));
+        window.location.href = 'materials.html'
+    });
+        // Initialize camera when page loads
+        window.addEventListener('DOMContentLoaded', startCamera);
+    </script>
+</body>
+</html>
