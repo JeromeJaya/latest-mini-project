@@ -250,16 +250,37 @@
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            transform: translateX(5px);
         }
 
         .task-item.completed {
             background: rgba(0, 204, 102, 0.15);
             border-left: 3px solid var(--completed);
+            text-decoration: line-through;
+            opacity: 0.7;
         }
 
         .task-item.pending {
             background: rgba(255, 77, 77, 0.15);
             border-left: 3px solid var(--pending);
+        }
+
+        .task-item.ai-generated {
+            background: rgba(99, 102, 241, 0.15);
+            border-left: 3px solid var(--primary);
+        }
+
+        .task-item.ai-generated::after {
+            content: '🤖';
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
         }
 
         .add-task-btn {
@@ -455,6 +476,104 @@
             box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
         }
 
+        /* AI Schedule Stats */
+        .schedule-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--neon);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
+        /* Task Detail Modal */
+        .task-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .task-modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .task-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .task-objectives {
+            margin-top: 1rem;
+        }
+
+        .task-objectives ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .task-objectives li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .task-objectives li:before {
+            content: '✓';
+            color: var(--neon);
+            margin-right: 0.5rem;
+        }
+
         @keyframes float {
             0%, 100% { transform: translate(0, 0); }
             25% { transform: translate(-20px, -20px); }
@@ -515,7 +634,7 @@
         <div>
             <button class="notification-btn">
                 <i class="fas fa-bell"></i>
-                <span class="notification-badge">3</span>
+                <span class="notification-badge" id="notificationCount">0</span>
             </button>
         </div>
     </header>
@@ -523,13 +642,33 @@
     <div class="container">
         <div class="hero">
             <h1>Plan Your Study Journey</h1>
-            <p>Schedule your learning tasks, set deadlines, and track your progress with our intuitive calendar system</p>
+            <p>AI-powered learning schedules with personalized daily segments</p>
             
             <div class="time-selector">
                 <button class="time-period-btn" data-period="morning">Morning</button>
                 <button class="time-period-btn" data-period="afternoon">Afternoon</button>
                 <button class="time-period-btn" data-period="evening">Evening</button>
                 <button class="time-period-btn" data-period="night">Night</button>
+            </div>
+        </div>
+
+        <!-- Schedule Statistics -->
+        <div class="schedule-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalTasks">0</div>
+                <div class="stat-label">Total Learning Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedTasks">0</div>
+                <div class="stat-label">Completed Tasks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="aiGeneratedTasks">0</div>
+                <div class="stat-label">AI Generated Segments</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="upcomingDeadlines">0</div>
+                <div class="stat-label">Upcoming Deadlines</div>
             </div>
         </div>
         
@@ -625,27 +764,36 @@
             </button>
         </div>
     </div>
+
+    <!-- Task Detail Modal -->
+    <div class="task-modal" id="taskModal">
+        <div class="task-modal-content">
+            <div class="task-modal-header">
+                <h3 id="modalTaskTitle">Task Details</h3>
+                <button class="close-modal" id="closeModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalTaskContent">
+                <!-- Task details will be populated here -->
+            </div>
+        </div>
+    </div>
     
     <div class="notification-center" id="notificationCenter">
         <!-- Notifications will be added here dynamically -->
     </div>
 
     <script>
-        // Sample tasks data
-        const tasks = [
-            { id: 1, title: "Quantum Physics Chapter 3", date: "2023-09-15", time: "09:00", completed: true },
-            { id: 2, title: "Solve Calculus Problems", date: "2023-09-18", time: "14:00", completed: false },
-            { id: 3, title: "Programming Assignment", date: "2023-09-20", time: "16:30", completed: false },
-            { id: 4, title: "Chemistry Lab Report", date: "2023-09-10", time: "11:00", completed: true },
-            { id: 5, title: "Read History Chapter 5", date: "2023-09-22", time: "19:00", completed: false },
-            { id: 6, title: "Prepare for English Presentation", date: "2023-09-25", time: "10:30", completed: false }
-        ];
+        // Enhanced tasks data with AI-generated learning segments
+        let tasks = [];
+        let learningSchedule = [];
 
         // Calendar functionality
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        let currentView = "month"; // "day", "week", or "month"
+        let currentView = "month";
 
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -664,13 +812,78 @@
         const weekViewBtn = document.getElementById('weekViewBtn');
         const monthViewBtn = document.getElementById('monthViewBtn');
         const timePeriodBtns = document.querySelectorAll('.time-period-btn');
+        const taskModal = document.getElementById('taskModal');
+        const closeModal = document.getElementById('closeModal');
+        const notificationCount = document.getElementById('notificationCount');
+
+        // Statistics elements
+        const totalTasksEl = document.getElementById('totalTasks');
+        const completedTasksEl = document.getElementById('completedTasks');
+        const aiGeneratedTasksEl = document.getElementById('aiGeneratedTasks');
+        const upcomingDeadlinesEl = document.getElementById('upcomingDeadlines');
+
+        // Load learning schedule from localStorage
+        function loadLearningSchedule() {
+            learningSchedule = JSON.parse(localStorage.getItem('learningSchedule')) || [];
+            
+            // Convert learning schedule to tasks format
+            tasks = [
+                // Original sample tasks
+                { id: 1, title: "Quantum Physics Chapter 3", date: "2024-01-15", time: "09:00", completed: true, type: "manual" },
+                { id: 2, title: "Solve Calculus Problems", date: "2024-01-18", time: "14:00", completed: false, type: "manual" },
+                { id: 3, title: "Programming Assignment", date: "2024-01-20", time: "16:30", completed: false, type: "manual" },
+                
+                // Add AI-generated learning segments
+                ...learningSchedule.map(segment => ({
+                    id: segment.id,
+                    title: segment.title,
+                    date: segment.date,
+                    time: segment.time || "15:00",
+                    completed: segment.completed || false,
+                    type: "ai-generated",
+                    materialTitle: segment.materialTitle,
+                    materialType: segment.materialType,
+                    content: segment.content,
+                    duration: segment.duration,
+                    objectives: segment.objectives,
+                    day: segment.day
+                }))
+            ];
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const total = tasks.length;
+            const completed = tasks.filter(task => task.completed).length;
+            const aiGenerated = tasks.filter(task => task.type === 'ai-generated').length;
+            
+            // Calculate upcoming deadlines (within 7 days)
+            const today = new Date();
+            const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            const upcoming = tasks.filter(task => {
+                const taskDate = new Date(task.date);
+                return taskDate >= today && taskDate <= nextWeek && !task.completed;
+            }).length;
+
+            totalTasksEl.textContent = total;
+            completedTasksEl.textContent = completed;
+            aiGeneratedTasksEl.textContent = aiGenerated;
+            upcomingDeadlinesEl.textContent = upcoming;
+            notificationCount.textContent = upcoming;
+        }
 
         // Initialize calendar
         function initCalendar() {
+            loadLearningSchedule();
             renderCalendar();
             renderTasks();
-            showNotification("Welcome to StudyScheduler", "Your tasks and deadlines are now organized in one place!");
-            showNotification("Daily Reminder", "You have 3 pending tasks for this week");
+            updateStatistics();
+            
+            if (learningSchedule.length > 0) {
+                showNotification("AI Schedule Loaded", `${learningSchedule.length} AI-generated learning segments are now in your calendar!`);
+            } else {
+                showNotification("Welcome to StudyScheduler", "Your tasks and deadlines are now organized in one place!");
+            }
         }
 
         // Render calendar
@@ -757,6 +970,11 @@
 
         // Render tasks on calendar
         function renderTasks() {
+            // Clear existing tasks
+            document.querySelectorAll('.tasks-container').forEach(container => {
+                container.innerHTML = '';
+            });
+
             tasks.forEach(task => {
                 const taskDate = new Date(task.date);
                 const formattedDate = formatDate(taskDate);
@@ -764,26 +982,102 @@
                 
                 if (taskContainer) {
                     const taskEl = document.createElement('div');
-                    taskEl.className = `task-item ${task.completed ? 'completed' : 'pending'}`;
+                    taskEl.className = `task-item ${task.completed ? 'completed' : 'pending'} ${task.type === 'ai-generated' ? 'ai-generated' : ''}`;
                     taskEl.title = task.title;
                     taskEl.innerHTML = `
                         <i class="fas fa-${getTaskIcon(task)}"></i> ${task.title}
                         <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 3px;">${task.time}</div>
                     `;
                     
-                    // Add click to toggle completion status
-                    taskEl.addEventListener('click', () => {
-                        task.completed = !task.completed;
-                        renderTasks();
-                        
-                        if (task.completed) {
-                            showNotification("Task Completed", `Great job completing: ${task.title}`);
+                    // Add click to toggle completion status or show details
+                    taskEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (task.type === 'ai-generated') {
+                            showTaskDetails(task);
+                        } else {
+                            task.completed = !task.completed;
+                            renderTasks();
+                            updateStatistics();
+                            
+                            if (task.completed) {
+                                showNotification("Task Completed", `Great job completing: ${task.title}`);
+                            }
                         }
                     });
                     
                     taskContainer.appendChild(taskEl);
                 }
             });
+        }
+
+        // Show task details in modal
+        function showTaskDetails(task) {
+            const modalTitle = document.getElementById('modalTaskTitle');
+            const modalContent = document.getElementById('modalTaskContent');
+            
+            modalTitle.textContent = task.title;
+            
+            modalContent.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <strong>Material:</strong> ${task.materialTitle || 'N/A'}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Type:</strong> ${task.materialType || 'N/A'}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Duration:</strong> ${task.duration || 'N/A'}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Day:</strong> ${task.day || 'N/A'}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Content:</strong>
+                    <p style="margin-top: 0.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        ${task.content || 'No content available'}
+                    </p>
+                </div>
+                ${task.objectives ? `
+                    <div class="task-objectives">
+                        <strong>Learning Objectives:</strong>
+                        <ul>
+                            ${task.objectives.map(obj => `<li>${obj}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                <div style="margin-top: 2rem; text-align: center;">
+                    <button class="btn btn-primary" onclick="toggleTaskCompletion('${task.id}')">
+                        ${task.completed ? 'Mark as Incomplete' : 'Mark as Complete'}
+                    </button>
+                </div>
+            `;
+            
+            taskModal.style.display = 'flex';
+        }
+
+        // Toggle task completion
+        function toggleTaskCompletion(taskId) {
+            const task = tasks.find(t => t.id == taskId);
+            if (task) {
+                task.completed = !task.completed;
+                
+                // Update in learning schedule if it's an AI-generated task
+                if (task.type === 'ai-generated') {
+                    const scheduleItem = learningSchedule.find(s => s.id == taskId);
+                    if (scheduleItem) {
+                        scheduleItem.completed = task.completed;
+                        localStorage.setItem('learningSchedule', JSON.stringify(learningSchedule));
+                    }
+                }
+                
+                renderTasks();
+                updateStatistics();
+                taskModal.style.display = 'none';
+                
+                showNotification(
+                    task.completed ? "Task Completed" : "Task Reopened",
+                    `${task.title} has been ${task.completed ? 'completed' : 'reopened'}`
+                );
+            }
         }
 
         // Helper function to format date as YYYY-MM-DD
@@ -796,8 +1090,17 @@
 
         // Get icon for task based on category
         function getTaskIcon(task) {
-            // This would normally come from task.category
-            // For demo, randomize
+            if (task.materialType) {
+                const icons = {
+                    theory: 'book',
+                    diagram: 'project-diagram',
+                    problem: 'calculator',
+                    code: 'code'
+                };
+                return icons[task.materialType] || 'file-alt';
+            }
+            
+            // Fallback for manual tasks
             const icons = ['book', 'chart-bar', 'calculator', 'code', 'flask', 'file-alt'];
             return icons[Math.floor(Math.random() * icons.length)];
         }
@@ -836,15 +1139,17 @@
             }
             
             const newTask = {
-                id: tasks.length + 1,
+                id: Date.now(),
                 title: title,
                 date: date,
                 time: time,
-                completed: false
+                completed: false,
+                type: "manual"
             };
             
             tasks.push(newTask);
             renderTasks();
+            updateStatistics();
             
             // Reset form
             document.getElementById('taskTitle').value = '';
@@ -919,6 +1224,17 @@
 
         addTaskBtn.addEventListener('click', addNewTask);
 
+        closeModal.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        taskModal.addEventListener('click', (e) => {
+            if (e.target === taskModal) {
+                taskModal.style.display = 'none';
+            }
+        });
+
         function setView(view) {
             currentView = view;
             dayViewBtn.classList.remove('active');
@@ -937,12 +1253,15 @@
             }
         }
 
+        // Make toggleTaskCompletion globally available
+        window.toggleTaskCompletion = toggleTaskCompletion;
+
         // Initialize calendar
         initCalendar();
 
         // Simulate Google Calendar integration
         document.querySelector('.notification-btn').addEventListener('click', () => {
-            showNotification("Google Calendar", "Your tasks have been synced with Google Calendar");
+            showNotification("Schedule Overview", `You have ${tasks.filter(t => !t.completed).length} pending tasks and ${tasks.filter(t => t.type === 'ai-generated').length} AI-generated learning segments`);
         });
     </script>
 </body>

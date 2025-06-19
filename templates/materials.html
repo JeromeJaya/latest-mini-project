@@ -281,7 +281,6 @@
             box-shadow: 0 0 20px rgba(0,255,136,0.3);
         }
 
-
         .progress-text {
             font-size: 0.9rem;
             color: var(--neon);
@@ -362,6 +361,16 @@
         .save-btn:hover {
             background: rgba(0, 255, 136, 0.3);
             transform: scale(1.05);
+        }
+
+        .calendar-btn {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .calendar-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+            transform: scale(1.1);
         }
 
         /* Edit Mode */
@@ -472,6 +481,44 @@
             color: var(--neon);
         }
 
+        /* Loading Modal */
+        .loading-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-content {
+            background: rgba(30, 41, 59, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0, 255, 136, 0.3);
+            border-top: 4px solid var(--neon);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .dashboard-header {
@@ -560,6 +607,15 @@
         </div>
     </div>
 
+    <!-- Loading Modal -->
+    <div class="loading-modal" id="loadingModal">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Processing Material</h3>
+            <p>AI is analyzing and splitting your content into daily learning segments...</p>
+        </div>
+    </div>
+
     <!-- Notification -->
     <div class="notification" id="notification">
         <div class="notification-content">
@@ -579,6 +635,7 @@
         const toggleUploadBtn = document.getElementById('toggleUpload');
         const notification = document.getElementById('notification');
         const notificationText = document.getElementById('notificationText');
+        const loadingModal = document.getElementById('loadingModal');
 
         // Toggle upload section
         uploadSection.style.display = 'none';
@@ -617,6 +674,186 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
+        }
+
+        // Show loading modal
+        function showLoading() {
+            loadingModal.style.display = 'flex';
+        }
+
+        // Hide loading modal
+        function hideLoading() {
+            loadingModal.style.display = 'none';
+        }
+
+        // AI Content Splitting Function
+        async function splitContentWithAI(content, deadline, materialTitle) {
+            const API_URL = 'https://open-ai21.p.rapidapi.com/claude3';
+            const API_KEY = 'cd5398045fmsh097aa728517c5e2p142dfbjsn56474f130c02';
+            
+            // Calculate days until deadline
+            const today = new Date();
+            const deadlineDate = new Date(deadline);
+            const timeDiff = deadlineDate.getTime() - today.getTime();
+            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            if (daysDiff <= 0) {
+                throw new Error('Deadline has already passed');
+            }
+
+            const prompt = `
+            You are an AI learning assistant. Split the following learning material into ${daysDiff} daily segments for optimal learning before the deadline.
+
+            Material Title: ${materialTitle}
+            Content: ${content}
+            Days Available: ${daysDiff}
+            Deadline: ${deadline}
+
+            Please respond with a JSON array containing daily learning segments in this exact format:
+            [
+                {
+                    "day": 1,
+                    "date": "YYYY-MM-DD",
+                    "title": "Day 1: Introduction to Topic",
+                    "content": "Specific content to cover on this day",
+                    "duration": "30-45 minutes",
+                    "objectives": ["Objective 1", "Objective 2"]
+                }
+            ]
+
+            Guidelines:
+            - Distribute content logically across available days
+            - Start with fundamentals and build complexity
+            - Include review sessions before deadline
+            - Each day should have 30-60 minutes of content
+            - Make titles engaging and descriptive
+            `;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'x-rapidapi-key': API_KEY,
+                        'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are a learning optimization AI. Always respond with valid JSON arrays for learning schedules.'
+                            },
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        web_access: false
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Parse the AI response
+                let segments;
+                try {
+                    // Try to extract JSON from the response
+                    const jsonMatch = data.result.match(/\[[\s\S]*\]/);
+                    if (jsonMatch) {
+                        segments = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error('No JSON found in response');
+                    }
+                } catch (parseError) {
+                    console.error('JSON parsing error:', parseError);
+                    // Fallback: create simple segments
+                    segments = createFallbackSegments(content, daysDiff, deadline, materialTitle);
+                }
+
+                return segments;
+            } catch (error) {
+                console.error('AI API Error:', error);
+                // Fallback: create simple segments
+                return createFallbackSegments(content, daysDiff, deadline, materialTitle);
+            }
+        }
+
+        // Fallback function to create segments when AI fails
+        function createFallbackSegments(content, daysDiff, deadline, materialTitle) {
+            const segments = [];
+            const today = new Date();
+            
+            for (let i = 0; i < daysDiff; i++) {
+                const segmentDate = new Date(today);
+                segmentDate.setDate(today.getDate() + i);
+                
+                segments.push({
+                    day: i + 1,
+                    date: segmentDate.toISOString().split('T')[0],
+                    title: `Day ${i + 1}: ${materialTitle} - Part ${i + 1}`,
+                    content: `Study section ${i + 1} of ${materialTitle}. Focus on understanding key concepts and take notes.`,
+                    duration: "45 minutes",
+                    objectives: [`Complete part ${i + 1}`, "Take comprehensive notes", "Review previous concepts"]
+                });
+            }
+            
+            return segments;
+        }
+
+        // Add to calendar function
+        async function addToCalendar(materialId) {
+            const material = materials.find(m => m.id === materialId);
+            if (!material) {
+                showNotification('Material not found', true);
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Split content using AI
+                const segments = await splitContentWithAI(
+                    material.content || `Study material: ${material.filename}`,
+                    material.deadline,
+                    material.filename
+                );
+
+                // Save segments to localStorage for scheduler
+                const existingSchedule = JSON.parse(localStorage.getItem('learningSchedule')) || [];
+                
+                // Remove any existing schedule for this material
+                const filteredSchedule = existingSchedule.filter(item => item.materialId !== materialId);
+                
+                // Add new segments
+                segments.forEach(segment => {
+                    filteredSchedule.push({
+                        id: Date.now() + Math.random(),
+                        materialId: materialId,
+                        materialTitle: material.filename,
+                        materialType: material.type,
+                        ...segment,
+                        completed: false,
+                        time: "15:00" // Default time
+                    });
+                });
+
+                localStorage.setItem('learningSchedule', JSON.stringify(filteredSchedule));
+                
+                hideLoading();
+                showNotification(`Successfully created ${segments.length} daily learning segments for ${material.filename}!`);
+                
+                // Ask user if they want to view the schedule
+                setTimeout(() => {
+                    if (confirm('Would you like to view your learning schedule now?')) {
+                        window.location.href = 'scheduler.html';
+                    }
+                }, 1000);
+
+            } catch (error) {
+                hideLoading();
+                showNotification('Failed to create learning schedule. Please try again.', true);
+                console.error('Calendar integration error:', error);
+            }
         }
 
         // Render materials list
@@ -662,6 +899,9 @@
                         </div>
                         <div class="progress-text">${material.progress}%</div>
                         <div class="material-actions">
+                            <button class="action-btn calendar-btn" title="Add to Calendar">
+                                <i class="fas fa-calendar-plus"></i>
+                            </button>
                             <button class="action-btn edit-btn" title="Edit">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -675,6 +915,7 @@
                 materialList.appendChild(card);
                 
                 // Add event listeners for the buttons in this card
+                card.querySelector('.calendar-btn').addEventListener('click', () => addToCalendar(material.id));
                 card.querySelector('.edit-btn').addEventListener('click', () => toggleEditMode(card));
                 card.querySelector('.delete-btn').addEventListener('click', () => deleteMaterial(card));
             });
@@ -845,7 +1086,8 @@
                 filename: fileInput.files[0].name,
                 type: materialType.value,
                 deadline: deadline.value,
-                progress: Math.floor(Math.random() * 100) // Random progress for demo
+                progress: Math.floor(Math.random() * 100), // Random progress for demo
+                content: `Sample content for ${fileInput.files[0].name}. This would normally be extracted from the uploaded file.`
             };
             
             materials.unshift(newMaterial);
@@ -862,8 +1104,18 @@
             showNotification('Material added successfully!');
         });
 
-        // Initialize on load
+        // Check for new camera material on load
         window.addEventListener('DOMContentLoaded', () => {
+            // Check for new material from camera
+            const newCameraMaterial = localStorage.getItem('newCameraMaterial');
+            if (newCameraMaterial) {
+                const materialData = JSON.parse(newCameraMaterial);
+                materials.unshift(materialData);
+                saveMaterials();
+                localStorage.removeItem('newCameraMaterial');
+                showNotification('Camera material added successfully!');
+            }
+            
             // Add sample materials if empty
             if (materials.length === 0) {
                 materials = [
@@ -871,22 +1123,25 @@
                         id: 1,
                         filename: 'Physics Theory',
                         type: 'theory',
-                        deadline: '2023-12-15',
-                        progress: 75
+                        deadline: '2024-12-15',
+                        progress: 75,
+                        content: 'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. It is the foundation of all quantum physics including quantum chemistry, quantum field theory, quantum technology, and quantum information science.'
                     },
                     {
                         id: 2,
                         filename: 'Chemistry Formulas',
                         type: 'diagram',
-                        deadline: '2023-12-20',
-                        progress: 40
+                        deadline: '2024-12-20',
+                        progress: 40,
+                        content: 'Chemical formulas and equations represent the composition and reactions of chemical compounds. Understanding molecular structures, bonding patterns, and reaction mechanisms is essential for mastering chemistry.'
                     },
                     {
                         id: 3,
                         filename: 'Math Problems',
                         type: 'problem',
-                        deadline: '2023-12-18',
-                        progress: 90
+                        deadline: '2024-12-18',
+                        progress: 90,
+                        content: 'Advanced calculus problems involving derivatives, integrals, and differential equations. Practice with limits, continuity, and applications in physics and engineering.'
                     }
                 ];
                 saveMaterials();
