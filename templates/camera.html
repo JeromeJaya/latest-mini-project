@@ -197,7 +197,28 @@
         function processImage(canvas) {
             // In a real app, you would send the image to your backend API
             // For demo purposes, we'll use mock text
-            extractedContent = `a girl with flower in her big opened mouth`;
+            extractedContent = `To change a video to black and white in KMPlayer, follow these steps:
+
+Steps to Make Video Black and White in KMPlayer:
+Open KMPlayer and play your video.
+
+Right-click on the video screen to open the context menu.
+
+Go to:
+Video (V) → Video Effects (E) → Color Adjustment...
+(Or you can press the shortcut key: [Alt + G])
+
+In the Color Adjustment window:
+
+Look for the Saturation slider.
+
+Drag the Saturation slider all the way to the left (0) — this removes all color, making the video appear in black and white.
+
+Close the window. The change will take effect immediately.
+
+Note: This change is only temporary (for viewing). It does not save the video in black and white.
+
+Would you like to save the black and white video permanently?`;
             
             // Hide loading and show results
             loading.style.display = 'none';
@@ -222,8 +243,8 @@
             progress: 30
         };
         
-         localStorage.setItem('newCameraMaterial', JSON.stringify(materialData));
-            // In real app, this would open a learning interface
+         //localStorage.setItem('newCameraMaterial', JSON.stringify(materialData));
+             window.location.href = `shorts.html?question=${extractedContent}`;
         });
 
         document.getElementById('add-btn').addEventListener('click', () => {
@@ -238,7 +259,7 @@
         };
         
          localStorage.setItem('newCameraMaterial', JSON.stringify(materialData));
-        window.location.href = 'materials.html'
+         window.location.href = 'materials.html'
     });
         // Initialize camera when page loads
         window.addEventListener('DOMContentLoaded', startCamera);
