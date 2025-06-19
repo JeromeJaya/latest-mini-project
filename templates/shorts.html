@@ -3,588 +3,711 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learning Reels | VisioLearn</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Robust Story Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --accent: #ec4899;
-            --dark: #0f172a;
-            --neon: #00ff88;
-            --darker: #0a0f1f;
-            --card-bg: rgba(30, 30, 50, 0.7);
-        }
-
+        
         body {
-            background: linear-gradient(135deg, var(--darker), var(--dark));
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
             color: white;
             overflow-x: hidden;
             min-height: 100vh;
         }
-
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 20px;
         }
-
+        
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(45deg, var(--neon), var(--primary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .logo i {
-            font-size: 2.2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-        }
-
-        .nav-links a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: var(--neon);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--neon);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .hero {
             text-align: center;
-            padding: 3rem 0;
+            padding: 30px 0;
+            position: relative;
+            z-index: 10;
         }
-
-        .hero h1 {
+        
+        h1 {
             font-size: 3.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(45deg, var(--neon), var(--primary));
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #ff8a00, #e52e71, #22c1c3);
             -webkit-background-clip: text;
             background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: float 3s ease-in-out infinite;
+            color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
         }
-
-        .hero p {
+        
+        .subtitle {
             font-size: 1.2rem;
+            opacity: 0.8;
             max-width: 700px;
-            margin: 0 auto 2rem;
-            color: rgba(255, 255, 255, 0.8);
+            margin: 0 auto 30px;
         }
-
-        .reels-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem 0;
-        }
-
-        .reel-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        
+        /* Chat Interface */
+        .chat-container {
+            background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 30px auto;
+            max-width: 700px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
         }
-
-        .reel-card.active {
-            transform: scale(1.02);
-            box-shadow: 0 0 40px rgba(0, 255, 136, 0.3);
-            border-color: rgba(0, 255, 136, 0.3);
-        }
-
-        .reel-header {
-            display: flex;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .reel-profile {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            font-weight: bold;
-        }
-
-        .reel-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .reel-content {
-            position: relative;
-            height: 500px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 2rem;
+        
+        #chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
             background: rgba(0, 0, 0, 0.2);
         }
-
-        .reel-image {
-            width: 100%;
-            max-width: 600px;
-            height: 300px;
-            border-radius: 15px;
-            background: linear-gradient(45deg, #1a1a2e, #16213e);
+        
+        .message {
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-out;
+            position: relative;
+        }
+        
+        .user-message {
+            background: linear-gradient(90deg, #4e54c8, #8f94fb);
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message {
+            background: rgba(255, 255, 255, 0.15);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #user-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 2px rgba(142, 68, 173, 0.5);
+        }
+        
+        #user-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        #send-button {
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 0 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            margin-bottom: 2rem;
         }
-
-        .reel-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
+        
+        #send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 117, 252, 0.4);
         }
-
-        .reel-card.active .reel-image img {
-            transform: scale(1.05);
+        
+        #send-button:active {
+            transform: translateY(1px);
         }
-
-        .reel-subtitle {
+        
+        #typing-indicator {
             text-align: center;
-            font-size: 1.4rem;
-            max-width: 600px;
-            margin: 1rem 0;
-            padding: 1.5rem;
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            border-left: 4px solid var(--neon);
+            padding: 10px;
+            font-style: italic;
+            opacity: 0.8;
+            display: none;
+        }
+        
+        /* Story Slides */
+        .story-slides {
+            display: none;
             position: relative;
+            height: 100vh;
+            overflow: hidden;
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
         }
-
-        .voice-indicator {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 8px 15px;
-            border-radius: 30px;
-            font-size: 0.9rem;
-        }
-
-        .voice-bar {
-            width: 4px;
-            height: 20px;
-            background: var(--neon);
-            border-radius: 2px;
-            animation: voicePulse 1.2s infinite;
-        }
-
-        .voice-bar:nth-child(2) {
-            animation-delay: 0.2s;
-            height: 15px;
-        }
-
-        .voice-bar:nth-child(3) {
-            animation-delay: 0.4s;
-            height: 10px;
-        }
-
-        .reel-footer {
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.3);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 1.5rem;
-        }
-
-        .action-btn {
+        
+        .slide {
+            height: 100vh;
+            width: 100%;
+            scroll-snap-align: start;
+            position: relative;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .action-btn:hover {
-            color: var(--neon);
-            transform: translateY(-3px);
-        }
-
-        .action-btn i {
-            font-size: 1.5rem;
-        }
-
-        .progress-indicator {
-            display: flex;
             justify-content: center;
-            gap: 8px;
-            margin-top: 2rem;
+            align-items: center;
+            background-size: cover;
+            background-position: center;
+            transition: transform 0.8s ease-in-out;
+            overflow: hidden;
         }
-
-        .progress-dot {
-            width: 10px;
-            height: 10px;
+        
+        .slide-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+        
+        .slide-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 20px;
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUp 0.8s forwards 0.5s;
+        }
+        
+        .slide-title {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .slide-story {
+            font-size: 1.8rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .slide-id {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 1.5rem;
+            background: rgba(0, 0, 0, 0.6);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            font-weight: bold;
         }
-
-        .progress-dot.active {
-            background: var(--neon);
+        
+        .nav-dots {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .dot.active {
+            background: white;
             transform: scale(1.3);
         }
-
-        .floating-element {
+        
+        .back-btn {
             position: fixed;
-            width: 100px;
-            height: 100px;
-            background: rgba(0, 255, 136, 0.1);
+            top: 30px;
+            left: 30px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            z-index: -1;
-            animation: float 8s ease-in-out infinite;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
         }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(-20px, -20px); }
-            50% { transform: translate(20px, 20px); }
-            75% { transform: translate(-20px, 20px); }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
         }
-
-        @keyframes voicePulse {
-            0%, 100% { transform: scaleY(1); }
-            50% { transform: scaleY(1.5); }
+        
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
         }
-
-        footer {
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        
+        .credit {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
             text-align: center;
-            padding: 2rem;
-            margin-top: 3rem;
-            color: rgba(255, 255, 255, 0.6);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            opacity: 0.7;
+            z-index: 3;
         }
-
-        /* Responsive design */
+        
+        .warning {
+            background: rgba(255, 165, 0, 0.2);
+            border-left: 4px solid #ffa500;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive */
         @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-            
-            .reel-content {
-                height: 400px;
-            }
-            
-            .reel-subtitle {
-                font-size: 1.1rem;
-                padding: 1rem;
-            }
+            h1 { font-size: 2.5rem; }
+            .slide-title { font-size: 2rem; }
+            .slide-story { font-size: 1.4rem; }
+            .chat-container { padding: 15px; }
+            #chat-messages { height: 250px; }
+            .input-group { flex-direction: column; }
+            #send-button { padding: 15px; }
+        }
+        
+        .size-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .size-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .size-btn.active {
+            background: linear-gradient(45deg, #6a11cb, #2575fc);
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
-    <!-- Floating background elements -->
-    <div class="floating-element" style="top: 10%; left: 5%;"></div>
-    <div class="floating-element" style="top: 60%; right: 10%; width: 150px; height: 150px;"></div>
-    <div class="floating-element" style="top: 30%; right: 20%; width: 80px; height: 80px;"></div>
-
-     const payload = {
-        prompt: prompt,
-        width: widthSelect.value,
-        height: heightSelect.value,
-        model: "flux"
-    };
-    
-
-    <header>
-        <div class="logo">
-            <i class="fas fa-brain"></i>
-            <span>VisioReels</span>
-        </div>
-        <div class="nav-links">
-            <a href="#">Home</a>
-            <a href="#">Discover</a>
-            <a href="#">Library</a>
-            <a href="#">Profile</a>
-        </div>
-    </header>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
     
     <div class="container">
-        <div class="hero">
-            <h1>Learning Through Stories</h1>
-            <p>Scroll through immersive learning reels where complex concepts are broken down into engaging visual stories</p>
-        </div>
+        <header>
+            <h1><i class="fas fa-book-open"></i> Robust Story Generator</h1>
+            <p class="subtitle">Create large stories with 40-60 items without JSON parsing issues</p>
+        </header>
         
-        <div class="reels-container" id="reelsContainer">
-            <!-- Reels will be dynamically generated -->
+        <div class="chat-container">
+            <div class="size-controls">
+                <button class="size-btn active" data-size="6">Small Story (6 items)</button>
+                <button class="size-btn" data-size="20">Medium Story (20 items)</button>
+                <button class="size-btn" data-size="50">Large Story (50 items)</button>
+            </div>
+            
+            <div id="chat-messages">
+                <div class="message ai-message">
+                    <p>Hi there! I'm your creative assistant. What story would you like to create today?</p>
+                    <p class="warning" id="json-warning">Note: Large stories may take longer to generate but our robust parser will handle them</p>
+                </div>
+            </div>
+            
+            <div id="typing-indicator">
+                <i class="fas fa-circle-notch fa-spin"></i> Generating your story...
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="user-input" placeholder="Describe your story idea...">
+                <button id="send-button">
+                    <i class="fas fa-paper-plane"></i> Generate
+                </button>
+            </div>
         </div>
     </div>
     
-    <footer>
-        <p>© 2023 VisioReels. Transforming learning through visual storytelling.</p>
-    </footer>
+    <div class="story-slides" id="story-slides">
+        <button class="back-btn" id="back-btn">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="nav-dots" id="nav-dots"></div>
+        <!-- Slides will be generated here -->
+    </div>
 
     <script>
-        // Story data - each object represents a scene/reel
-        const storyReels = [
+         window.onload = function () {
+    const params = new URLSearchParams(window.location.search);
+    const question = params.get("question");
+    console.log(question);  // Will also run on page load
+  };
+        // DOM elements
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const storySlides = document.getElementById('story-slides');
+        const backBtn = document.getElementById('back-btn');
+        const navDots = document.getElementById('nav-dots');
+        const progressBar = document.getElementById('progress-bar');
+        const jsonWarning = document.getElementById('json-warning');
+        const sizeButtons = document.querySelectorAll('.size-btn');
+        
+        // Configuration
+        let storySize = 6;
+        const STORY_API_URL = 'https://open-ai21.p.rapidapi.com/claude3';
+        const API_KEY = 'cd5398045fmsh097aa728517c5e2p142dfbjsn56474f130c02';
+        
+        // Image sources
+        const IMAGE_SOURCES = [
             {
-                id: 1,
-                title: "The Quantum Revolution",
-                image: "https://images.unsplash.com/photo-1502136969935-8d8eef54d77b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
-                subtitle: "In the early 20th century, physicists discovered that light behaves both as particles and waves. This dual nature sparked the quantum revolution.",
-                audioDuration: "0:15"
+                name: "Pexels",
+                url: (query) => `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`,
+                headers: {
+                    "Authorization": "563492ad6f91700001000001b2d2b4c7d6d64b7da5c2f3c7e8f3b8b3"
+                },
+                extract: (data) => data.photos[0]?.src?.large2x
             },
             {
-                id: 2,
-                title: "Schrödinger's Equation",
-                image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
-                subtitle: "Erwin Schrödinger formulated an equation that describes how quantum systems evolve over time. The wave function ψ contains all information about a quantum system.",
-                audioDuration: "0:18"
-            },
-            {
-                id: 3,
-                title: "The Uncertainty Principle",
-                image: "https://images.unsplash.com/photo-1593378026484-bb2761edb55b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
-                subtitle: "Heisenberg showed that we cannot simultaneously know both the position and momentum of a particle with perfect accuracy. This fundamental limit is known as the uncertainty principle.",
-                audioDuration: "0:22"
-            },
-            {
-                id: 4,
-                title: "Quantum Superposition",
-                image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
-                subtitle: "Quantum particles can exist in multiple states simultaneously. Schrödinger's famous cat thought experiment illustrates this paradoxical behavior.",
-                audioDuration: "0:20"
-            },
-            {
-                id: 5,
-                title: "Quantum Entanglement",
-                image: "https://images.unsplash.com/photo-1563089145-599997674d42?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80",
-                subtitle: "When particles become entangled, they share a quantum connection. Measuring one instantly affects the other, no matter how far apart they are.",
-                audioDuration: "0:19"
+                name: "Pixabay",
+                url: (query) => `https://pixabay.com/api/?key=25674839-3b9b7b2d1d0f4c0b2d1f0f3d5&q=${encodeURIComponent(query)}&per_page=1`,
+                extract: (data) => data.hits[0]?.largeImageURL
             }
         ];
-
-        // Generate reels based on story data
-        const reelsContainer = document.getElementById('reelsContainer');
-        const progressContainer = document.createElement('div');
-        progressContainer.className = 'progress-indicator';
         
-        storyReels.forEach((reel, index) => {
-            const reelElement = document.createElement('div');
-            reelElement.className = 'reel-card';
-            reelElement.id = `reel-${reel.id}`;
-            reelElement.innerHTML = `
-                <div class="reel-header">
-                    <div class="reel-profile">VR</div>
-                    <div class="reel-title">${reel.title}</div>
-                </div>
-                <div class="reel-content">
-                    <div class="reel-image">
-                        <img src="${reel.image}" alt="${reel.title}">
-                    </div>
-                    <div class="reel-subtitle">${reel.subtitle}</div>
-                    <div class="voice-indicator">
-                        <span>Voice: ${reel.audioDuration}</span>
-                        <div class="voice-bar"></div>
-                        <div class="voice-bar"></div>
-                        <div class="voice-bar"></div>
-                    </div>
-                </div>
-                <div class="reel-footer">
-                    <div class="action-buttons">
-                        <button class="action-btn">
-                            <i class="fas fa-heart"></i>
-                            <span>Like</span>
-                        </button>
-                        <button class="action-btn">
-                            <i class="fas fa-comment"></i>
-                            <span>Comment</span>
-                        </button>
-                        <button class="action-btn">
-                            <i class="fas fa-share"></i>
-                            <span>Share</span>
-                        </button>
-                    </div>
-                    <div class="reel-number">${index + 1}/${storyReels.length}</div>
-                </div>
-            `;
-            reelsContainer.appendChild(reelElement);
-            
-            // Create progress dots
-            const progressDot = document.createElement('div');
-            progressDot.className = 'progress-dot';
-            progressDot.dataset.reelId = reel.id;
-            progressContainer.appendChild(progressDot);
-        });
-        
-        reelsContainer.appendChild(progressContainer);
-        
-        // Scroll interaction
-        let currentReelIndex = 0;
-        
-        function setActiveReel(index) {
-            // Remove active class from all reels and dots
-            document.querySelectorAll('.reel-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            
-            document.querySelectorAll('.progress-dot').forEach(dot => {
-                dot.classList.remove('active');
-            });
-            
-            // Add active class to current reel and dot
-            const currentReel = document.getElementById(`reel-${storyReels[index].id}`);
-            if (currentReel) {
-                currentReel.classList.add('active');
+        // Event listeners for size buttons
+        sizeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sizeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                storySize = parseInt(btn.dataset.size);
                 
-                // Scroll to the active reel
-                currentReel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            
-            const currentDot = document.querySelector(`.progress-dot[data-reel-id="${storyReels[index].id}"]`);
-            if (currentDot) {
-                currentDot.classList.add('active');
-            }
-            
-            currentReelIndex = index;
+                if(storySize > 20) {
+                    jsonWarning.style.display = 'block';
+                } else {
+                    jsonWarning.style.display = 'none';
+                }
+            });
+        });
+        
+        // Add a message to the chat
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(role === 'user' ? 'user-message' : 'ai-message');
+            messageDiv.textContent = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
         
-        // Initialize with first reel active
-        setActiveReel(0);
+        // Update progress bar
+        function updateProgress(percent) {
+            progressBar.style.width = `${percent}%`;
+        }
         
-        // Handle scroll events
-        let isScrolling = false;
-        
-        window.addEventListener('wheel', (e) => {
-            if (isScrolling) return;
-            
-            isScrolling = true;
-            
-            if (e.deltaY > 0) {
-                // Scrolling down
-                if (currentReelIndex < storyReels.length - 1) {
-                    setActiveReel(currentReelIndex + 1);
+        // Robust JSON parser that can handle large responses
+        function parseLargeJsonResponse(text) {
+            try {
+                // First try standard parsing
+                return JSON.parse(text);
+            } catch (e) {
+                console.log("Standard parse failed, trying advanced repair...");
+                
+                // Attempt to extract JSON from the response
+                const jsonStart = text.indexOf('[');
+                const jsonEnd = text.lastIndexOf(']') + 1;
+                
+                if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                    const jsonStr = text.substring(jsonStart, jsonEnd);
+                    
+                    try {
+                        return JSON.parse(jsonStr);
+                    } catch (e) {
+                        console.log("Extracted JSON parse failed, trying repair...");
+                        
+                        // More advanced repair for common issues
+                        const repaired = jsonStr
+                            .replace(/(\w+):/g, '"$1":') // Add quotes around keys
+                            .replace(/'/g, '"') // Replace single quotes with double
+                            .replace(/,\s*}/g, '}') // Remove trailing commas
+                            .replace(/,\s*]/g, ']'); // Remove trailing commas
+                        
+                        try {
+                            return JSON.parse(repaired);
+                        } catch (e) {
+                            console.error("JSON repair failed:", e);
+                            throw new Error('Failed to parse JSON after repair attempts');
+                        }
+                    }
                 }
-            } else {
-                // Scrolling up
-                if (currentReelIndex > 0) {
-                    setActiveReel(currentReelIndex - 1);
+                
+                throw new Error('No valid JSON found in response');
+            }
+        }
+        
+        // Generate story structure using Claude3 API
+        async function getStoryItems(message, itemCount) {
+            updateProgress(20);
+            
+            const options = {
+                method: 'POST',
+                headers: {
+                    'x-rapidapi-key': API_KEY,
+                    'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    messages: [
+                        {
+                            role: 'system',
+                            content: `You are an AI that breaks down given topics into multiple lines and generates detailed prompts to search for relevant images. Respond ONLY in JSON format: [{id:1,title:"...",story_line:"...",promptOfTheLine:"..."}, ...] with exactly ${itemCount} items. Do not include any other text.`
+                        },
+                        {
+                            role: 'user',
+                            content: message
+                        }
+                    ],
+                    web_access: false
+                })
+            };
+            
+            try {
+                const response = await fetch(STORY_API_URL, options);
+                const data = await response.json();
+                
+                // Handle large JSON responses with our robust parser
+                return parseLargeJsonResponse(data.result);
+            } catch (error) {
+                console.error('Story API Error:', error);
+                throw new Error('Failed to generate story structure');
+            }
+        }
+        
+        // Get relevant image from online sources
+        async function getRelevantImage(query) {
+            // Try each image source until we find one that works
+            for (const source of IMAGE_SOURCES) {
+                try {
+                    const response = await fetch(source.url(query), {
+                        method: 'GET',
+                        headers: source.headers || {}
+                    });
+                    
+                    if (!response.ok) {
+                        continue; // Try next source
+                    }
+                    
+                    const data = await response.json();
+                    const imageUrl = source.extract(data);
+                    
+                    if (imageUrl) {
+                        return {
+                            url: imageUrl,
+                            source: source.name
+                        };
+                    }
+                } catch (error) {
+                    console.log(`Error with ${source.name}:`, error);
+                    // Continue to next source
                 }
             }
             
+            // Fallback to placeholder if no image found
+            return {
+                url: `https://via.placeholder.com/1600x900/1a2a6c/ffffff?text=${encodeURIComponent(query.substring(0, 30))}`,
+                source: "Placeholder"
+            };
+        }
+        
+        // Display story slides
+        async function displayStorySlides(storyItems) {
+            updateProgress(60);
+            
+            // Generate slides for each story item
+            storySlides.innerHTML = `
+                <button class="back-btn" id="back-btn">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="nav-dots" id="nav-dots"></div>
+            `;
+            
+            // Add slides
+            for (const [index, item] of storyItems.entries()) {
+                const imageData = await getRelevantImage(item.promptOfTheLine);
+                updateProgress(60 + (index / storyItems.length) * 30);
+                
+                const slide = document.createElement('div');
+                slide.className = 'slide';
+                slide.style.backgroundImage = `url('${imageData.url}')`;
+                slide.innerHTML = `
+                    <div class="slide-overlay"></div>
+                    <div class="slide-content">
+                        <h2 class="slide-title">${item.title}</h2>
+                        <div class="slide-story">${item.story_line}</div>
+                    </div>
+                    <div class="slide-id">${item.id}</div>
+                    <div class="credit">Image source: ${imageData.source}</div>
+                `;
+                storySlides.appendChild(slide);
+                
+                // Add navigation dot
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.dataset.index = index;
+                dot.addEventListener('click', () => {
+                    scrollToSlide(index);
+                });
+                navDots.appendChild(dot);
+            }
+            
+            // Show slides container
+            storySlides.style.display = 'block';
+            
+            // Set up navigation
+            document.getElementById('back-btn').addEventListener('click', () => {
+                storySlides.style.display = 'none';
+            });
+            
+            // Initialize first slide as active
+            updateActiveSlide(0);
+            
+            // Set up scroll detection
+            storySlides.addEventListener('scroll', () => {
+                const slideIndex = Math.round(storySlides.scrollTop / window.innerHeight);
+                updateActiveSlide(slideIndex);
+            });
+            
+            updateProgress(100);
             setTimeout(() => {
-                isScrolling = false;
-            }, 1000);
-        });
+                progressBar.style.width = '0%';
+            }, 500);
+        }
         
-        // Keyboard navigation
-        window.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === ' ') {
-                if (currentReelIndex < storyReels.length - 1) {
-                    setActiveReel(currentReelIndex + 1);
-                    e.preventDefault();
-                }
-            } else if (e.key === 'ArrowUp') {
-                if (currentReelIndex > 0) {
-                    setActiveReel(currentReelIndex - 1);
-                    e.preventDefault();
-                }
-            }
-        });
-        
-        // Progress dot navigation
-        document.querySelectorAll('.progress-dot').forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                setActiveReel(index);
-            });
-        });
-        
-        // Auto-play voice simulation
-        function simulateVoice() {
-            const voiceBars = document.querySelectorAll('.reel-card.active .voice-bar');
-            voiceBars.forEach(bar => {
-                bar.style.animationPlayState = 'running';
+        // Scroll to specific slide
+        function scrollToSlide(index) {
+            storySlides.scrollTo({
+                top: index * window.innerHeight,
+                behavior: 'smooth'
             });
         }
         
-        // Initialize voice simulation for first reel
-        simulateVoice();
+        // Update active navigation dot
+        function updateActiveSlide(index) {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        }
         
-        // Update voice simulation when reel changes
-        setInterval(() => {
-            simulateVoice();
-        }, 100);
+        // Handle user input
+        async function handleUserInput() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addMessage('user', message);
+            userInput.value = '';
+            
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+            
+            try {
+                // Get story items from API
+                addMessage('ai', `Generating a story with ${storySize} scenes...`);
+                const storyItems = await getStoryItems(message, storySize);
+                
+                // Add AI response
+                addMessage('ai', `Successfully created story with ${storyItems.length} scenes. Finding relevant images now...`);
+                
+                // Display slides
+                await displayStorySlides(storyItems);
+            } catch (error) {
+                addMessage('ai', 'Sorry, something went wrong. Please try again.');
+                console.error('Error:', error);
+            } finally {
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+            }
+        }
+        
+        // Event listeners
+        sendButton.addEventListener('click', handleUserInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleUserInput();
+        });
+        
+        // Initialize
+        addMessage('ai', "Hi there! I'm your creative assistant. What story would you like to create today? I'll generate a narrative and find relevant images from the web for your idea.");
     </script>
 </body>
 </html>
