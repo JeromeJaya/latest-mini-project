@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robust Story Generator</title>
+    <title>Interactive Learning - VisioLearn</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -315,6 +315,64 @@
             display: none;
         }
         
+        /* Material Info Display */
+        .material-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .material-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #22c1c3;
+        }
+        
+        .material-type {
+            display: inline-block;
+            background: rgba(34, 193, 195, 0.2);
+            color: #22c1c3;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .content-preview {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        /* Auto-generate button */
+        .auto-generate-btn {
+            background: linear-gradient(45deg, #ff8a00, #e52e71);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .auto-generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(255, 138, 0, 0.3);
+        }
+        
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -366,11 +424,21 @@
     
     <div class="container">
         <header>
-            <h1><i class="fas fa-book-open"></i> Robust Story Generator</h1>
-            <p class="subtitle">Create large stories with 40-60 items without JSON parsing issues</p>
+            <h1><i class="fas fa-book-open"></i> Interactive Learning</h1>
+            <p class="subtitle">Transform your study materials into engaging visual stories</p>
         </header>
         
         <div class="chat-container">
+            <!-- Material Info Section -->
+            <div class="material-info" id="material-info" style="display: none;">
+                <div class="material-title" id="material-title">Loading material...</div>
+                <div class="material-type" id="material-type">Type</div>
+                <div class="content-preview" id="content-preview">Content preview...</div>
+                <button class="auto-generate-btn" id="auto-generate-btn">
+                    <i class="fas fa-magic"></i> Auto-Generate Learning Story
+                </button>
+            </div>
+            
             <div class="size-controls">
                 <button class="size-btn active" data-size="6">Small Story (6 items)</button>
                 <button class="size-btn" data-size="20">Medium Story (20 items)</button>
@@ -379,17 +447,17 @@
             
             <div id="chat-messages">
                 <div class="message ai-message">
-                    <p>Hi there! I'm your creative assistant. What story would you like to create today?</p>
+                    <p>Hi there! I'm your learning assistant. I can help you transform your study materials into engaging visual stories.</p>
                     <p class="warning" id="json-warning">Note: Large stories may take longer to generate but our robust parser will handle them</p>
                 </div>
             </div>
             
             <div id="typing-indicator">
-                <i class="fas fa-circle-notch fa-spin"></i> Generating your story...
+                <i class="fas fa-circle-notch fa-spin"></i> Generating your learning story...
             </div>
             
             <div class="input-group">
-                <input type="text" id="user-input" placeholder="Describe your story idea...">
+                <input type="text" id="user-input" placeholder="Describe what you want to learn or let AI auto-generate from your material...">
                 <button id="send-button">
                     <i class="fas fa-paper-plane"></i> Generate
                 </button>
@@ -406,11 +474,6 @@
     </div>
 
     <script>
-         window.onload = function () {
-    const params = new URLSearchParams(window.location.search);
-    const question = params.get("question");
-    console.log(question);  // Will also run on page load
-  };
         // DOM elements
         const chatMessages = document.getElementById('chat-messages');
         const userInput = document.getElementById('user-input');
@@ -422,9 +485,15 @@
         const progressBar = document.getElementById('progress-bar');
         const jsonWarning = document.getElementById('json-warning');
         const sizeButtons = document.querySelectorAll('.size-btn');
+        const materialInfo = document.getElementById('material-info');
+        const materialTitle = document.getElementById('material-title');
+        const materialType = document.getElementById('material-type');
+        const contentPreview = document.getElementById('content-preview');
+        const autoGenerateBtn = document.getElementById('auto-generate-btn');
         
         // Configuration
         let storySize = 6;
+        let currentMaterial = null;
         const STORY_API_URL = 'https://open-ai21.p.rapidapi.com/claude3';
         const API_KEY = 'cd5398045fmsh097aa728517c5e2p142dfbjsn56474f130c02';
         
@@ -445,6 +514,57 @@
             }
         ];
         
+        // Load material from URL parameters or localStorage
+        function loadMaterial() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const materialId = urlParams.get('material');
+            const question = urlParams.get('question');
+            
+            // Check for material from URL parameters
+            if (materialId) {
+                const materials = JSON.parse(localStorage.getItem('materials')) || [];
+                currentMaterial = materials.find(m => m.id == materialId);
+            }
+            
+            // Check for material from localStorage (from materials page)
+            if (!currentMaterial) {
+                const learningMaterial = localStorage.getItem('currentLearningMaterial');
+                if (learningMaterial) {
+                    currentMaterial = JSON.parse(learningMaterial);
+                    localStorage.removeItem('currentLearningMaterial'); // Clean up
+                }
+            }
+            
+            // Check for question parameter (from camera)
+            if (question && !currentMaterial) {
+                currentMaterial = {
+                    title: 'Camera Capture',
+                    content: decodeURIComponent(question),
+                    type: 'theory'
+                };
+            }
+            
+            // Display material info if available
+            if (currentMaterial) {
+                displayMaterialInfo();
+                addMessage('ai', `I've loaded your material: "${currentMaterial.title}". You can auto-generate a learning story or describe what specific aspect you'd like to focus on.`);
+            }
+        }
+        
+        // Display material information
+        function displayMaterialInfo() {
+            if (!currentMaterial) return;
+            
+            materialInfo.style.display = 'block';
+            materialTitle.textContent = currentMaterial.title;
+            materialType.textContent = currentMaterial.type?.toUpperCase() || 'MATERIAL';
+            
+            // Show content preview (first 300 characters)
+            const preview = currentMaterial.content?.substring(0, 300) + 
+                           (currentMaterial.content?.length > 300 ? '...' : '');
+            contentPreview.textContent = preview || 'No content preview available';
+        }
+        
         // Event listeners for size buttons
         sizeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -458,6 +578,16 @@
                     jsonWarning.style.display = 'none';
                 }
             });
+        });
+        
+        // Auto-generate button event listener
+        autoGenerateBtn.addEventListener('click', () => {
+            if (currentMaterial && currentMaterial.content) {
+                userInput.value = `Create an educational story based on: ${currentMaterial.title}`;
+                handleUserInput();
+            } else {
+                addMessage('ai', 'No material content available for auto-generation. Please describe what you\'d like to learn about.');
+            }
         });
         
         // Add a message to the chat
@@ -519,6 +649,12 @@
         async function getStoryItems(message, itemCount) {
             updateProgress(20);
             
+            // Enhanced prompt that includes material content if available
+            let enhancedMessage = message;
+            if (currentMaterial && currentMaterial.content) {
+                enhancedMessage = `Based on this learning material: "${currentMaterial.title}" with content: "${currentMaterial.content.substring(0, 1000)}", create an educational story about: ${message}`;
+            }
+            
             const options = {
                 method: 'POST',
                 headers: {
@@ -530,11 +666,11 @@
                     messages: [
                         {
                             role: 'system',
-                            content: `You are an AI that breaks down given topics into multiple lines and generates detailed prompts to search for relevant images. Respond ONLY in JSON format: [{id:1,title:"...",story_line:"...",promptOfTheLine:"..."}, ...] with exactly ${itemCount} items. Do not include any other text.`
+                            content: `You are an AI that creates educational content by breaking down learning materials into engaging story segments. Create exactly ${itemCount} learning segments that build upon each other. Respond ONLY in JSON format: [{"id":1,"title":"...","story_line":"...","promptOfTheLine":"..."}, ...]. Each story_line should be educational and based on the provided material. Make it engaging and easy to understand.`
                         },
                         {
                             role: 'user',
-                            content: message
+                            content: enhancedMessage
                         }
                     ],
                     web_access: false
@@ -683,11 +819,11 @@
             
             try {
                 // Get story items from API
-                addMessage('ai', `Generating a story with ${storySize} scenes...`);
+                addMessage('ai', `Generating a learning story with ${storySize} segments based on your material...`);
                 const storyItems = await getStoryItems(message, storySize);
                 
                 // Add AI response
-                addMessage('ai', `Successfully created story with ${storyItems.length} scenes. Finding relevant images now...`);
+                addMessage('ai', `Successfully created learning story with ${storyItems.length} segments. Finding relevant images now...`);
                 
                 // Display slides
                 await displayStorySlides(storyItems);
@@ -707,7 +843,15 @@
         });
         
         // Initialize
-        addMessage('ai', "Hi there! I'm your creative assistant. What story would you like to create today? I'll generate a narrative and find relevant images from the web for your idea.");
+        window.addEventListener('DOMContentLoaded', () => {
+            loadMaterial();
+            
+            if (currentMaterial) {
+                addMessage('ai', `Welcome! I've loaded your material "${currentMaterial.title}". Click the auto-generate button or describe what specific aspect you'd like to explore in an interactive story format.`);
+            } else {
+                addMessage('ai', "Hi there! I'm your learning assistant. Describe what you'd like to learn about and I'll create an engaging visual story for you.");
+            }
+        });
     </script>
 </body>
 </html>

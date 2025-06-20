@@ -333,6 +333,16 @@
             z-index: 1;
         }
 
+        .learn-btn {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .learn-btn:hover {
+            background: rgba(99, 102, 241, 0.3);
+            transform: scale(1.1);
+        }
+
         .edit-btn {
             background: rgba(255, 165, 0, 0.2);
             color: #ffa500;
@@ -611,8 +621,8 @@
     <div class="loading-modal" id="loadingModal">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <h3>Processing Material</h3>
-            <p>AI is analyzing and splitting your content into daily learning segments...</p>
+            <h3 id="loadingTitle">Processing Material</h3>
+            <p id="loadingMessage">AI is analyzing and splitting your content into daily learning segments...</p>
         </div>
     </div>
 
@@ -636,6 +646,8 @@
         const notification = document.getElementById('notification');
         const notificationText = document.getElementById('notificationText');
         const loadingModal = document.getElementById('loadingModal');
+        const loadingTitle = document.getElementById('loadingTitle');
+        const loadingMessage = document.getElementById('loadingMessage');
 
         // Toggle upload section
         uploadSection.style.display = 'none';
@@ -677,7 +689,9 @@
         }
 
         // Show loading modal
-        function showLoading() {
+        function showLoading(title = "Processing Material", message = "Please wait...") {
+            loadingTitle.textContent = title;
+            loadingMessage.textContent = message;
             loadingModal.style.display = 'flex';
         }
 
@@ -686,7 +700,129 @@
             loadingModal.style.display = 'none';
         }
 
-        // AI Content Splitting Function
+        // Extract text from PDF using PDF.js
+        async function extractTextFromPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        // Load PDF.js library dynamically
+                        if (!window.pdfjsLib) {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                            document.head.appendChild(script);
+                            
+                            await new Promise((resolve) => {
+                                script.onload = resolve;
+                            });
+                            
+                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                        }
+
+                        const pdf = await window.pdfjsLib.getDocument({data: e.target.result}).promise;
+                        let fullText = '';
+                        
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            fullText += pageText + '\n';
+                        }
+                        
+                        resolve(fullText.trim());
+                    } catch (error) {
+                        console.error('PDF extraction error:', error);
+                        reject(new Error('Failed to extract text from PDF'));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Failed to read PDF file'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Extract text from image using OCR API
+        async function extractTextFromImage(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            try {
+                // Using OCR.space API for text extraction
+                const response = await fetch('https://api.ocr.space/parse/image', {
+                    method: 'POST',
+                    headers: {
+                        'apikey': 'K87899142388957' // Free OCR.space API key
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.ParsedResults && result.ParsedResults.length > 0) {
+                    return result.ParsedResults[0].ParsedText;
+                } else {
+                    throw new Error('No text found in image');
+                }
+            } catch (error) {
+                console.error('OCR API error:', error);
+                
+                // Fallback: Try alternative OCR API
+                try {
+                    const base64 = await fileToBase64(file);
+                    const response = await fetch('https://api.api-ninjas.com/v1/imagetotext', {
+                        method: 'POST',
+                        headers: {
+                            'X-Api-Key': 'YOUR_API_NINJAS_KEY',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            image: base64
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    return result.text || 'Could not extract text from image';
+                } catch (fallbackError) {
+                    console.error('Fallback OCR failed:', fallbackError);
+                    return `Image uploaded: ${file.name}. Text extraction not available.`;
+                }
+            }
+        }
+
+        // Convert file to base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // Extract content from uploaded file
+        async function extractContentFromFile(file) {
+            const fileType = file.type;
+            const fileName = file.name.toLowerCase();
+            
+            showLoading("Extracting Content", "Reading and processing your file...");
+            
+            try {
+                if (fileType === 'application/pdf' || fileName.endsWith('.pdf')) {
+                    return await extractTextFromPDF(file);
+                } else if (fileType.startsWith('image/')) {
+                    return await extractTextFromImage(file);
+                } else if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+                    return await file.text();
+                } else {
+                    // For other file types, return filename with note
+                    return `File uploaded: ${file.name}. Content extraction not supported for this file type.`;
+                }
+            } catch (error) {
+                console.error('Content extraction error:', error);
+                return `File uploaded: ${file.name}. Error extracting content: ${error.message}`;
+            }
+        }
+
+        // AI Content Splitting Function (Enhanced)
         async function splitContentWithAI(content, deadline, materialTitle) {
             const API_URL = 'https://open-ai21.p.rapidapi.com/claude3';
             const API_KEY = 'cd5398045fmsh097aa728517c5e2p142dfbjsn56474f130c02';
@@ -727,6 +863,7 @@
             - Include review sessions before deadline
             - Each day should have 30-60 minutes of content
             - Make titles engaging and descriptive
+            - Base the content on the actual material provided
             `;
 
             try {
@@ -782,16 +919,22 @@
         function createFallbackSegments(content, daysDiff, deadline, materialTitle) {
             const segments = [];
             const today = new Date();
+            const contentLength = content.length;
+            const segmentSize = Math.ceil(contentLength / daysDiff);
             
             for (let i = 0; i < daysDiff; i++) {
                 const segmentDate = new Date(today);
                 segmentDate.setDate(today.getDate() + i);
                 
+                const startIndex = i * segmentSize;
+                const endIndex = Math.min((i + 1) * segmentSize, contentLength);
+                const segmentContent = content.substring(startIndex, endIndex);
+                
                 segments.push({
                     day: i + 1,
                     date: segmentDate.toISOString().split('T')[0],
                     title: `Day ${i + 1}: ${materialTitle} - Part ${i + 1}`,
-                    content: `Study section ${i + 1} of ${materialTitle}. Focus on understanding key concepts and take notes.`,
+                    content: segmentContent || `Study section ${i + 1} of ${materialTitle}. Focus on understanding key concepts and take notes.`,
                     duration: "45 minutes",
                     objectives: [`Complete part ${i + 1}`, "Take comprehensive notes", "Review previous concepts"]
                 });
@@ -800,7 +943,7 @@
             return segments;
         }
 
-        // Add to calendar function
+        // Add to calendar function (Enhanced)
         async function addToCalendar(materialId) {
             const material = materials.find(m => m.id === materialId);
             if (!material) {
@@ -808,12 +951,15 @@
                 return;
             }
 
-            showLoading();
+            showLoading("Processing Content", "Extracting and analyzing content for learning schedule...");
 
             try {
+                // Use the extracted content from the material
+                const content = material.content || `Study material: ${material.filename}`;
+                
                 // Split content using AI
                 const segments = await splitContentWithAI(
-                    material.content || `Study material: ${material.filename}`,
+                    content,
                     material.deadline,
                     material.filename
                 );
@@ -856,7 +1002,40 @@
             }
         }
 
-        // Render materials list
+        // Learn function - redirect to shorts page with content
+        async function learnMaterial(materialId) {
+            const material = materials.find(m => m.id === materialId);
+            if (!material) {
+                showNotification('Material not found', true);
+                return;
+            }
+
+            showLoading("Preparing Learning Content", "Getting your material ready for interactive learning...");
+
+            try {
+                // Store the material content for shorts page
+                const learningData = {
+                    materialId: materialId,
+                    title: material.filename,
+                    content: material.content || `Study material: ${material.filename}`,
+                    type: material.type
+                };
+
+                localStorage.setItem('currentLearningMaterial', JSON.stringify(learningData));
+                
+                hideLoading();
+                
+                // Redirect to shorts page with the content
+                window.location.href = `shorts.html?material=${materialId}&title=${encodeURIComponent(material.filename)}`;
+
+            } catch (error) {
+                hideLoading();
+                showNotification('Failed to prepare learning content. Please try again.', true);
+                console.error('Learn material error:', error);
+            }
+        }
+
+        // Render materials list (Enhanced)
         function renderMaterials() {
             materialList.innerHTML = '';
             
@@ -899,6 +1078,9 @@
                         </div>
                         <div class="progress-text">${material.progress}%</div>
                         <div class="material-actions">
+                            <button class="action-btn learn-btn" title="Start Learning">
+                                <i class="fas fa-play"></i>
+                            </button>
                             <button class="action-btn calendar-btn" title="Add to Calendar">
                                 <i class="fas fa-calendar-plus"></i>
                             </button>
@@ -915,6 +1097,7 @@
                 materialList.appendChild(card);
                 
                 // Add event listeners for the buttons in this card
+                card.querySelector('.learn-btn').addEventListener('click', () => learnMaterial(material.id));
                 card.querySelector('.calendar-btn').addEventListener('click', () => addToCalendar(material.id));
                 card.querySelector('.edit-btn').addEventListener('click', () => toggleEditMode(card));
                 card.querySelector('.delete-btn').addEventListener('click', () => deleteMaterial(card));
@@ -1057,8 +1240,8 @@
             }
         }
 
-        // Handle form submission
-        uploadForm.addEventListener('submit', (e) => {
+        // Handle form submission (Enhanced)
+        uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const fileInput = document.getElementById('fileInput');
@@ -1080,28 +1263,42 @@
                 return;
             }
             
-            // Create new material
-            const newMaterial = {
-                id: Date.now(),
-                filename: fileInput.files[0].name,
-                type: materialType.value,
-                deadline: deadline.value,
-                progress: Math.floor(Math.random() * 100), // Random progress for demo
-                content: `Sample content for ${fileInput.files[0].name}. This would normally be extracted from the uploaded file.`
-            };
-            
-            materials.unshift(newMaterial);
-            saveMaterials();
-            
-            // Reset form
-            uploadForm.reset();
-            uploadSection.style.display = 'none';
-            
-            // Re-render materials
-            renderMaterials();
-            
-            // Show notification
-            showNotification('Material added successfully!');
+            try {
+                // Extract content from the uploaded file
+                const extractedContent = await extractContentFromFile(fileInput.files[0]);
+                
+                // Create new material with extracted content
+                const newMaterial = {
+                    id: Date.now(),
+                    filename: fileInput.files[0].name,
+                    type: materialType.value,
+                    deadline: deadline.value,
+                    progress: Math.floor(Math.random() * 100), // Random progress for demo
+                    content: extractedContent,
+                    fileType: fileInput.files[0].type,
+                    fileSize: fileInput.files[0].size
+                };
+                
+                materials.unshift(newMaterial);
+                saveMaterials();
+                
+                // Reset form
+                uploadForm.reset();
+                uploadSection.style.display = 'none';
+                
+                // Re-render materials
+                renderMaterials();
+                
+                hideLoading();
+                
+                // Show notification
+                showNotification('Material added successfully with content extracted!');
+                
+            } catch (error) {
+                hideLoading();
+                showNotification('Error processing file: ' + error.message, true);
+                console.error('File processing error:', error);
+            }
         });
 
         // Check for new camera material on load
@@ -1121,27 +1318,30 @@
                 materials = [
                     {
                         id: 1,
-                        filename: 'Physics Theory',
+                        filename: 'Physics Theory.pdf',
                         type: 'theory',
                         deadline: '2024-12-15',
                         progress: 75,
-                        content: 'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. It is the foundation of all quantum physics including quantum chemistry, quantum field theory, quantum technology, and quantum information science.'
+                        content: 'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. It is the foundation of all quantum physics including quantum chemistry, quantum field theory, quantum technology, and quantum information science. The theory was developed in the early 20th century and has been extensively tested and verified through experiments.',
+                        fileType: 'application/pdf'
                     },
                     {
                         id: 2,
-                        filename: 'Chemistry Formulas',
+                        filename: 'Chemistry Formulas.jpg',
                         type: 'diagram',
                         deadline: '2024-12-20',
                         progress: 40,
-                        content: 'Chemical formulas and equations represent the composition and reactions of chemical compounds. Understanding molecular structures, bonding patterns, and reaction mechanisms is essential for mastering chemistry.'
+                        content: 'Chemical formulas and equations represent the composition and reactions of chemical compounds. Understanding molecular structures, bonding patterns, and reaction mechanisms is essential for mastering chemistry. Key concepts include: 1) Molecular formulas showing atom ratios, 2) Structural formulas showing bond arrangements, 3) Chemical equations showing reactants and products, 4) Balancing equations for conservation of mass.',
+                        fileType: 'image/jpeg'
                     },
                     {
                         id: 3,
-                        filename: 'Math Problems',
+                        filename: 'Math Problems.txt',
                         type: 'problem',
                         deadline: '2024-12-18',
                         progress: 90,
-                        content: 'Advanced calculus problems involving derivatives, integrals, and differential equations. Practice with limits, continuity, and applications in physics and engineering.'
+                        content: 'Advanced calculus problems involving derivatives, integrals, and differential equations. Practice with limits, continuity, and applications in physics and engineering. Topics covered: 1) Limits and continuity, 2) Derivatives and applications, 3) Integration techniques, 4) Differential equations, 5) Series and sequences, 6) Multivariable calculus.',
+                        fileType: 'text/plain'
                     }
                 ];
                 saveMaterials();
