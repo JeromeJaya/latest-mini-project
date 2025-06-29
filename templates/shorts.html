@@ -415,6 +415,21 @@
             background: linear-gradient(45deg, #6a11cb, #2575fc);
             transform: scale(1.05);
         }
+
+        .highlighted-keyword {
+            background: linear-gradient(45deg, #ff8a00, #e52e71);
+            padding: 2px 6px;
+            border-radius: 4px;
+            animation: highlight-pulse 1.5s infinite;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(255, 138, 0, 0.5);
+        }
+
+        @keyframes highlight-pulse {
+            0% { box-shadow: 0 0 5px rgba(255, 138, 0, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(255, 138, 0, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(255, 138, 0, 0.5); }
+        }
     </style>
 </head>
 <body>
@@ -452,19 +467,27 @@
                 </div>
             </div>
             
-            <div id="typing-indicator">
+            <div id="typing-indicator" >
                 <i class="fas fa-circle-notch fa-spin"></i> Generating your learning story...
+            </div>
+              <div class="chat-container">
+            <!-- Material Info Section -->
+            <div class="material-info" id="material-info" style="display: none;">
+            
             </div>
             
             <div class="input-group">
-                <input type="text" id="user-input" placeholder="Describe what you want to learn or let AI auto-generate from your material...">
+                <input type="text" id="user-input">
                 <button id="send-button">
                     <i class="fas fa-paper-plane"></i> Generate
                 </button>
             </div>
         </div>
     </div>
-    
+    <div class="container">
+       
+      
+    </div>
     <div class="story-slides" id="story-slides">
         <button class="back-btn" id="back-btn">
             <i class="fas fa-arrow-left"></i>
@@ -490,32 +513,32 @@
         const materialType = document.getElementById('material-type');
         const contentPreview = document.getElementById('content-preview');
         const autoGenerateBtn = document.getElementById('auto-generate-btn');
+
+       
         
         // Configuration
         let storySize = 6;
         let currentMaterial = null;
-        const STORY_API_URL = 'https://open-ai21.p.rapidapi.com/claude3';
+        const STORY_API_URL = 'https://open-ai21.p.rapidapi.com/chatgpt';
         const API_KEY = 'cd5398045fmsh097aa728517c5e2p142dfbjsn56474f130c02';
         
         // Image sources
         const IMAGE_SOURCES = [
             {
-                name: "Pexels",
-                url: (query) => `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`,
-                headers: {
-                    "Authorization": "563492ad6f91700001000001b2d2b4c7d6d64b7da5c2f3c7e8f3b8b3"
-                },
-                extract: (data) => data.photos[0]?.src?.large2x
-            },
-            {
                 name: "Pixabay",
-                url: (query) => `https://pixabay.com/api/?key=25674839-3b9b7b2d1d0f4c0b2d1f0f3d5&q=${encodeURIComponent(query)}&per_page=1`,
+                url: (query) => `https://pixabay.com/api/?key=30855187-9f40ff18f97599d933a0ab41e=${encodeURIComponent(query)}&per_page=1`,
                 extract: (data) => data.hits[0]?.largeImageURL
             }
         ];
         
         // Load material from URL parameters or localStorage
         function loadMaterial() {
+               const learningSegment = localStorage.getItem('currentLearningSegment');
+    if (learningSegment) {
+        currentMaterial = JSON.parse(learningSegment);
+        localStorage.removeItem('currentLearningSegment'); // Clean up
+        return;
+    }
             const urlParams = new URLSearchParams(window.location.search);
             const materialId = urlParams.get('material');
             const question = urlParams.get('question');
@@ -553,6 +576,7 @@
         
         // Display material information
         function displayMaterialInfo() {
+            
             if (!currentMaterial) return;
             
             materialInfo.style.display = 'block';
@@ -607,6 +631,7 @@
         
         // Robust JSON parser that can handle large responses
         function parseLargeJsonResponse(text) {
+            console.log(`this is the responce from api :${text}`)
             try {
                 // First try standard parsing
                 return JSON.parse(text);
@@ -621,6 +646,8 @@
                     const jsonStr = text.substring(jsonStart, jsonEnd);
                     
                     try {
+                        const value = JSON.parse(jsonStr);
+                        console.log(`this is prased json file : ${value}`)
                         return JSON.parse(jsonStr);
                     } catch (e) {
                         console.log("Extracted JSON parse failed, trying repair...");
@@ -633,6 +660,8 @@
                             .replace(/,\s*]/g, ']'); // Remove trailing commas
                         
                         try {
+                        const value1 = JSON.parse(repaired);
+                        console.log(`this is prased json file : ${value1}`)
                             return JSON.parse(repaired);
                         } catch (e) {
                             console.error("JSON repair failed:", e);
@@ -652,7 +681,9 @@
             // Enhanced prompt that includes material content if available
             let enhancedMessage = message;
             if (currentMaterial && currentMaterial.content) {
-                enhancedMessage = `Based on this learning material: "${currentMaterial.title}" with content: "${currentMaterial.content.substring(0, 1000)}", create an educational story about: ${message}`;
+                const curre =currentMaterial.content;
+                enhancedMessage = `create an educational story with content: "${curre}", keep in mind that the generate story must contain all the original keywords. you should not miss any available keywords. based one requirment of the user. the user requirment is  ${message}`;
+                console.log(enhancedMessage)
             }
             
             const options = {
@@ -666,22 +697,93 @@
                     messages: [
                         {
                             role: 'system',
-                            content: `You are an AI that creates educational content by breaking down learning materials into engaging story segments. Create exactly ${itemCount} learning segments that build upon each other. Respond ONLY in JSON format: [{"id":1,"title":"...","story_line":"...","promptOfTheLine":"..."}, ...]. Each story_line should be educational and based on the provided material. Make it engaging and easy to understand.`
+                            content: `You are an AI that creates educational content by breaking down learning materials into various sub heading 
+                            and its content, extracting all possible keywords word or the important words of that content. and also you engaging 
+                            story segments by connecting all the key words. it is not madatory that story should be similar to the original content. Create exactly ${itemCount} learning segments that build upon each other.
+                            you are just writing some fictional unrealisticing imaginal story which makes the user to remember and recall the 
+                            keywords. use very very basic english language which can be understand by even a small child. and the very important
+                            thing is the generate story must contain all the keyword of the particular content. Create exactly ${itemCount} learning 
+                            segments that build upon each other. Respond ONLY in JSON format: 
+                            [{"id":1,"title":"the original subheading of the content should come here...","content":"the original content of the proticular content should come
+                             here...","keyWords":"all the key words of the content should come here","story_line":"the fictional story to remember 
+                             the key words should come here...","promptOfTheLine":"the detailed image prompt to generate image should come here..."},
+                              ...]. always create exacatly ${itemCount} id segments. example : if the original subheadings are (iot devices, increased connectivity, edge device, cloud computing, iot interface, security layer )
+                              the out put is 
+                            [{"id":1,"title":" IoT Ecosystem Overview",
+                            "content":"The IoT ecosystem is a dynamic and interconnected system that combines various technologies to enable smart
+                             operations across industries. At its core are IoT devices, which are physical objects embedded with sensors and actuators
+                             that collect and transmit data. With increased connectivity through networks like Wi-Fi, 5G, and Bluetooth, these devices
+                             communicate seamlessly with each other and with central systems. Edge devices play a crucial role by processing data 
+                             locally, reducing latency and bandwidth usage before forwarding only essential information to the cloud, where cloud 
+                             computing provides scalable storage, advanced analytics, and centralized control. Users interact with this ecosystem
+                              through an IoT interface, such as mobile apps or dashboards, allowing real-time monitoring and control. To safeguard
+                               this vast network, a robust security layer is essential, ensuring authentication, encryption, and protection against
+                                cyber threats. Together, these components create an efficient, responsive, and secure IoT ecosystem.",
+                                "keyWords":"iot devices, increased connectivity, edge device, cloud computing, iot interface, security laye",
+                                "story_line":"in a villiage there is very big "iot device" which help all the village help to "increase connectivity" within them. 
+                                one day in the "edge of the device" there is a crack, so people started "cloud comuputing" for data backup. now 
+                                they are living happily with "interface of the iot" by building  a "security layer" around their village.",
+                                "promptOfTheLine":"A peaceful, futuristic village surrounded by green fields and hills. In the center, a giant 
+                                glowing IoT device shaped like a modern, high-tech tower with antennas and holographic rings, symbolizing "increased
+                                 connectivity" throughout the village. Villagers are shown interacting happily with devices and screens (representing                                 
+                        the "IoT interface"). On one side of the device, a visible crack glows faintly, while nearby, transparent cloud structures are
+                         forming in the sky, symbolizing "cloud computing" for data backup. Around the village, a glowing protective dome or digital
+                          shield is forming — this represents the "security layer." The overall mood is vibrant, secure, and futuristic with warm 
+                          lighting and soft tech-inspired design."},
+                              ...]`
                         },
                         {
                             role: 'user',
                             content: enhancedMessage
                         }
                     ],
-                    web_access: false
+                    web_access: false,
+		/*system_prompt: `You are an AI that creates educational content by breaking down learning materials into various sub heading 
+                            and its content, extracting all possible keywords word or the important words of that content. and also you engaging 
+                            story segments by connecting all the key words. it is not madatory that story should be similar to the original content. Create exactly ${itemCount} learning segments that build upon each other.
+                            you are just writing some fictional unrealisticing imaginal story which makes the user to remember and recall the 
+                            keywords. Create exactly ${itemCount} learning segments that build upon each other. Respond ONLY in JSON format: 
+                            [{"id":1,"title":"the original subheading of the content should come here...","content":"the original content of the proticular content should come
+                             here...","keyWords":"all the key words of the content should come here","story_line":"the fictional story to remember 
+                             the key words should come here...","promptOfTheLine":"the detailed image prompt to generate image should come here..."},
+                              ...]. always create exacatly${itemCount} number of id segments. example : if the original subheadings are (iot devices, increased connectivity, edge device, cloud computing, iot interface, security layer )
+                              the out put is 
+                            [{"id":1,"title":" IoT Ecosystem Overview",
+                            "content":"The IoT ecosystem is a dynamic and interconnected system that combines various technologies to enable smart
+                             operations across industries. At its core are IoT devices, which are physical objects embedded with sensors and actuators
+                             that collect and transmit data. With increased connectivity through networks like Wi-Fi, 5G, and Bluetooth, these devices
+                             communicate seamlessly with each other and with central systems. Edge devices play a crucial role by processing data 
+                             locally, reducing latency and bandwidth usage before forwarding only essential information to the cloud, where cloud 
+                             computing provides scalable storage, advanced analytics, and centralized control. Users interact with this ecosystem
+                              through an IoT interface, such as mobile apps or dashboards, allowing real-time monitoring and control. To safeguard
+                               this vast network, a robust security layer is essential, ensuring authentication, encryption, and protection against
+                                cyber threats. Together, these components create an efficient, responsive, and secure IoT ecosystem.",
+                                "keyWords":"iot devices, increased connectivity, edge device, cloud computing, iot interface, security laye",
+                                "story_line":"in a villiage there is very big "iot device" which help all the village help to "increase connectivity" within them. 
+                                one day in the "edge of the device" there is a crack, so people started "cloud comuputing" for data backup. now 
+                                they are living happily with "interface of the iot" by building  a "security layer" around their village.",
+                                "promptOfTheLine":"A peaceful, futuristic village surrounded by green fields and hills. In the center, a giant 
+                                glowing IoT device shaped like a modern, high-tech tower with antennas and holographic rings, symbolizing "increased
+                                 connectivity" throughout the village. Villagers are shown interacting happily with devices and screens (representing                                 
+                        the "IoT interface"). On one side of the device, a visible crack glows faintly, while nearby, transparent cloud structures are
+                         forming in the sky, symbolizing "cloud computing" for data backup. Around the village, a glowing protective dome or digital
+                          shield is forming — this represents the "security layer." The overall mood is vibrant, secure, and futuristic with warm 
+                          lighting and soft tech-inspired design."},
+                              ...]`,*/
+		temperature: 0.9,
+		top_k: 5,
+		top_p: 0.9,
+		max_tokens: 10000
                 })
             };
             
             try {
                 const response = await fetch(STORY_API_URL, options);
                 const data = await response.json();
-                
                 // Handle large JSON responses with our robust parser
+                addMessage('ai', `the question is ${enhancedMessage}`);
+                addMessage('ai', data.result);
+                
                 return parseLargeJsonResponse(data.result);
             } catch (error) {
                 console.error('Story API Error:', error);
@@ -724,8 +826,8 @@
                 source: "Placeholder"
             };
         }
-        
-        // Display story slides
+
+        // Modify the displayStorySlides function
         async function displayStorySlides(storyItems) {
             updateProgress(60);
             
@@ -742,18 +844,31 @@
                 const imageData = await getRelevantImage(item.promptOfTheLine);
                 updateProgress(60 + (index / storyItems.length) * 30);
                 
+                // Highlight keywords in the story line
+                const highlightedStory = highlightKeywords(item.story_line, item.keyWords);
+                
                 const slide = document.createElement('div');
                 slide.className = 'slide';
+                slide.dataset.id = item.id;
+                slide.dataset.keywords = item.keyWords;
                 slide.style.backgroundImage = `url('${imageData.url}')`;
                 slide.innerHTML = `
-                    <div class="slide-overlay"></div>
-                    <div class="slide-content">
-                        <h2 class="slide-title">${item.title}</h2>
-                        <div class="slide-story">${item.story_line}</div>
-                    </div>
-                    <div class="slide-id">${item.id}</div>
-                    <div class="credit">Image source: ${imageData.source}</div>
-                `;
+    <div class="slide-overlay"></div>
+    <div class="slide-content">
+        <h2 class="slide-title">${item.title}</h2>
+        <div class="slide-story">${item.story_line}</div>
+        
+        <!-- Add these audio controls -->
+        <div class="audio-controls">
+            <button class="audio-btn" data-index="${index}">
+                <i class="fas fa-play"></i>
+            </button>
+            <div class="audio-info">Click play to hear narration</div>
+        </div>
+    </div>
+    <div class="slide-id">${item.id}</div>
+    <div class="credit">Image source: ${imageData.source}</div>
+`;
                 storySlides.appendChild(slide);
                 
                 // Add navigation dot
@@ -788,20 +903,40 @@
                 progressBar.style.width = '0%';
             }, 500);
         }
-        
-        // Scroll to specific slide
-        function scrollToSlide(index) {
-            storySlides.scrollTo({
-                top: index * window.innerHeight,
-                behavior: 'smooth'
-            });
-        }
-        
-        // Update active navigation dot
+
+        // Add this function to update highlighting on scroll
         function updateActiveSlide(index) {
             const dots = document.querySelectorAll('.dot');
             dots.forEach((dot, i) => {
                 dot.classList.toggle('active', i === index);
+            });
+            
+            // Highlight keywords in the active slide
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => {
+                const keywords = slide.dataset.keywords;
+                if (!keywords) return;
+                
+                const storyElement = slide.querySelector('.slide-story');
+                if (storyElement) {
+                    const originalStory = storyElement.dataset.original || 
+                                         storyElement.textContent;
+                    
+                    // Store original text if not already stored
+                    if (!storyElement.dataset.original) {
+                        storyElement.dataset.original = originalStory;
+                    }
+                    
+                    // Highlight only when slide is active
+                    if (parseInt(slide.dataset.id) === index + 1) {
+                        storyElement.innerHTML = highlightKeywords(
+                            originalStory, 
+                            keywords
+                        );
+                    } else {
+                        storyElement.textContent = originalStory;
+                    }
+                }
             });
         }
         
@@ -820,6 +955,7 @@
             try {
                 // Get story items from API
                 addMessage('ai', `Generating a learning story with ${storySize} segments based on your material...`);
+
                 const storyItems = await getStoryItems(message, storySize);
                 
                 // Add AI response
@@ -828,7 +964,7 @@
                 // Display slides
                 await displayStorySlides(storyItems);
             } catch (error) {
-                addMessage('ai', 'Sorry, something went wrong. Please try again.');
+                addMessage('ai', 'Sorry, something went wrong. Please try again.');                
                 console.error('Error:', error);
             } finally {
                 // Hide typing indicator
@@ -845,13 +981,36 @@
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             loadMaterial();
-            
             if (currentMaterial) {
                 addMessage('ai', `Welcome! I've loaded your material "${currentMaterial.title}". Click the auto-generate button or describe what specific aspect you'd like to explore in an interactive story format.`);
             } else {
                 addMessage('ai', "Hi there! I'm your learning assistant. Describe what you'd like to learn about and I'll create an engaging visual story for you.");
             }
         });
+        function speakMessage(text) {
+            if (synthesis) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+        synthesis.speak(utterance);
+    }
+}
+
+ // Add this helper function to highlight keywords
+        function highlightKeywords(storyLine, keywordsString) {
+            if (!keywordsString) return storyLine;
+            
+            const keywords = keywordsString.split(',').map(kw => kw.trim().toLowerCase());
+            let highlighted = storyLine;
+            
+            keywords.forEach(keyword => {
+                if (!keyword) return;
+                const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'gi');
+                highlighted = highlighted.replace(regex, '<span class="highlighted-keyword">$&</span>');
+            });
+            
+            return highlighted;
+        }
     </script>
 </body>
 </html>
