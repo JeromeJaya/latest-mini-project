@@ -989,70 +989,51 @@
                         <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 3px;">${task.time}</div>
                     `;
                     
-                    // Add click to toggle completion status or show details
-                    taskEl.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        if (task.type === 'ai-generated') {
-                            showTaskDetails(task);
-                        } else {
-                            task.completed = !task.completed;
-                            renderTasks();
-                            updateStatistics();
-                            
-                            if (task.completed) {
-                                showNotification("Task Completed", `Great job completing: ${task.title}`);
-                            }
-                        }
-                    });
+                    /// In the renderTasks function, modify the click handler:
+taskEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showTaskDetails(task); // Always show details when clicked
+});
                     
                     taskContainer.appendChild(taskEl);
                 }
             });
         }
 
-        // Show task details in modal
-        function showTaskDetails(task) {
-            const modalTitle = document.getElementById('modalTaskTitle');
-            const modalContent = document.getElementById('modalTaskContent');
-            
-            modalTitle.textContent = task.title;
-            
-            modalContent.innerHTML = `
-                <div style="margin-bottom: 1rem;">
-                    <strong>Material:</strong> ${task.materialTitle || 'N/A'}
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <strong>Type:</strong> ${task.materialType || 'N/A'}
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <strong>Duration:</strong> ${task.duration || 'N/A'}
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <strong>Day:</strong> ${task.day || 'N/A'}
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <strong>Content:</strong>
-                    <p style="margin-top: 0.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        ${task.content || 'No content available'}
-                    </p>
-                </div>
-                ${task.objectives ? `
-                    <div class="task-objectives">
-                        <strong>Learning Objectives:</strong>
-                        <ul>
-                            ${task.objectives.map(obj => `<li>${obj}</li>`).join('')}
-                        </ul>
-                    </div>
-                ` : ''}
-                <div style="margin-top: 2rem; text-align: center;">
-                    <button class="btn btn-primary" onclick="toggleTaskCompletion('${task.id}')">
-                        ${task.completed ? 'Mark as Incomplete' : 'Mark as Complete'}
-                    </button>
-                </div>
-            `;
-            
-            taskModal.style.display = 'flex';
-        }
+       // Replace this in the scheduler page's script
+function showTaskDetails(task) {
+    const modalTitle = document.getElementById('modalTaskTitle');
+    const modalContent = document.getElementById('modalTaskContent');
+    
+    modalTitle.textContent = task.title;
+    
+    modalContent.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <strong>Material:</strong> ${task.materialTitle || 'N/A'}
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <strong>Content:</strong>
+            <p style="margin-top: 0.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                ${task.content || 'No content available'}
+            </p>
+        </div>
+        <div style="margin-top: 2rem; text-align: center;">
+            <button class="btn btn-primary" id="start-learning-btn">
+                <i class="fas fa-play"></i> Start Learning
+            </button>
+        </div>
+    `;
+    
+    // Add event listener to the button
+    document.getElementById('start-learning-btn').addEventListener('click', () => {
+        // Save the task to localStorage
+        localStorage.setItem('currentLearningSegment', JSON.stringify(task));
+        // Redirect to shorts page
+        window.location.href = 'shorts.html';
+    });
+    
+    taskModal.style.display = 'flex';
+}
 
         // Toggle task completion
         function toggleTaskCompletion(taskId) {
@@ -1264,5 +1245,5 @@
             showNotification("Schedule Overview", `You have ${tasks.filter(t => !t.completed).length} pending tasks and ${tasks.filter(t => t.type === 'ai-generated').length} AI-generated learning segments`);
         });
     </script>
-</body>
+</body>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 </html>
