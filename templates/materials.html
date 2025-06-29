@@ -658,10 +658,49 @@
         </div>
     </div>
 
+    <!-- File Upload Configuration Modal -->
+    <div class="modal" id="fileUploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Configure Uploaded Material</h2>
+                <button class="close-modal" id="closeFileModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="fileUploadForm">
+                <div class="form-group">
+                    <label for="fileTitle">Title</label>
+                    <input type="text" id="fileTitle" class="form-control" placeholder="Enter material title" required>
+                </div>
+                <div class="form-group">
+                    <label for="fileType">Type</label>
+                    <select id="fileType" class="form-control" required>
+                        <option value="">Select type</option>
+                        <option value="theory">Theory</option>
+                        <option value="diagram">Diagrammatic</option>
+                        <option value="problem">Problematic</option>
+                        <option value="code">Programming</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fileDeadline">Deadline</label>
+                    <input type="date" id="fileDeadline" class="form-control" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" id="cancelFileBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Material
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let materials = [];
         let editingMaterialId = null;
+        let pendingFileData = null; // Store file data while user configures it
 
         // DOM elements
         const materialsGrid = document.getElementById('materialsGrid');
@@ -673,6 +712,12 @@
         const closeModal = document.getElementById('closeModal');
         const cancelBtn = document.getElementById('cancelBtn');
         const modalTitle = document.getElementById('modalTitle');
+        
+        // File upload modal elements
+        const fileUploadModal = document.getElementById('fileUploadModal');
+        const fileUploadForm = document.getElementById('fileUploadForm');
+        const closeFileModal = document.getElementById('closeFileModal');
+        const cancelFileBtn = document.getElementById('cancelFileBtn');
 
         // Load materials from localStorage
         function loadMaterials() {
@@ -948,46 +993,85 @@
             materialModal.style.display = 'none';
         });
 
-        // Handle file upload - FIXED VERSION
+        // Handle file upload - MODIFIED TO SHOW POPUP
         function handleFileUpload(event) {
             const files = Array.from(event.target.files);
             
-            files.forEach(file => {
-                // Determine file type and handle accordingly
-                if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-                    // Handle text files
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const content = e.target.result;
-                        addFileAsMaterial(file, content);
-                    };
-                    reader.readAsText(file);
-                } else if (file.type.startsWith('image/')) {
-                    // Handle image files
-                    addFileAsMaterial(file, 'Image file uploaded - content will be extracted when processed');
-                } else {
-                    // Handle other file types (PDF, DOCX, etc.)
-                    addFileAsMaterial(file, 'File uploaded successfully - content will be extracted when processed');
-                }
-            });
+            if (files.length === 0) return;
+            
+            // Process first file (for simplicity, handle one at a time)
+            const file = files[0];
+            
+            // Store file data temporarily
+            pendingFileData = {
+                file: file,
+                filename: file.name
+            };
+            
+            // Pre-fill the form with file name (without extension)
+            document.getElementById('fileTitle').value = file.name.replace(/\.[^/.]+$/, "");
+            
+            // Set default deadline to 1 week from now
+            const defaultDeadline = new Date();
+            defaultDeadline.setDate(defaultDeadline.getDate() + 7);
+            document.getElementById('fileDeadline').value = defaultDeadline.toISOString().split('T')[0];
+            
+            // Show the file upload configuration modal
+            fileUploadModal.style.display = 'block';
         }
 
-        // Helper function to add file as material
-        function addFileAsMaterial(file, content) {
+        // Handle file upload form submission
+        fileUploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if (!pendingFileData) return;
+            
+            const file = pendingFileData.file;
+            const formData = {
+                title: document.getElementById('fileTitle').value,
+                type: document.getElementById('fileType').value,
+                deadline: document.getElementById('fileDeadline').value
+            };
+            
+            // Process file content based on type
+            if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                // Handle text files
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    addFileAsMaterial(file, content, formData);
+                };
+                reader.readAsText(file);
+            } else if (file.type.startsWith('image/')) {
+                // Handle image files
+                addFileAsMaterial(file, 'Image file uploaded - content will be extracted when processed', formData);
+            } else {
+                // Handle other file types (PDF, DOCX, etc.)
+                addFileAsMaterial(file, 'File uploaded successfully - content will be extracted when processed', formData);
+            }
+            
+            // Close modal and reset
+            fileUploadModal.style.display = 'none';
+            pendingFileData = null;
+            fileUploadForm.reset();
+        });
+
+        // Helper function to add file as material with user configuration
+        function addFileAsMaterial(file, content, formData) {
             const newMaterial = {
                 id: Date.now() + Math.random(),
-                title: file.name.replace(/\.[^/.]+$/, ""),
-                type: 'theory',
+                title: formData.title,
+                type: formData.type,
                 content: content,
                 filename: file.name,
                 progress: 0,
-                deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                deadline: formData.deadline
             };
             
             materials.push(newMaterial);
             saveMaterials();
             renderMaterials();
-            showNotification(`${file.name} uploaded successfully!`, 'success');
+            showNotification(`${file.name} uploaded and configured successfully!`, 'success');
         }
 
         // File upload handling
@@ -1010,7 +1094,7 @@
             handleFileUpload({ target: { files: e.dataTransfer.files } });
         });
 
-        // Modal controls
+        // Modal controls for material modal
         closeModal.addEventListener('click', () => {
             materialModal.style.display = 'none';
         });
@@ -1019,10 +1103,28 @@
             materialModal.style.display = 'none';
         });
 
-        // Close modal when clicking outside
+        // Modal controls for file upload modal
+        closeFileModal.addEventListener('click', () => {
+            fileUploadModal.style.display = 'none';
+            pendingFileData = null;
+        });
+
+        cancelFileBtn.addEventListener('click', () => {
+            fileUploadModal.style.display = 'none';
+            pendingFileData = null;
+        });
+
+        // Close modals when clicking outside
         materialModal.addEventListener('click', (e) => {
             if (e.target === materialModal) {
                 materialModal.style.display = 'none';
+            }
+        });
+
+        fileUploadModal.addEventListener('click', (e) => {
+            if (e.target === fileUploadModal) {
+                fileUploadModal.style.display = 'none';
+                pendingFileData = null;
             }
         });
 
