@@ -824,7 +824,7 @@
 
         // AI Content Splitting Function (Enhanced)
         async function splitContentWithAI(content, deadline, materialTitle) {
-            const API_URL = 'https://open-ai21.p.rapidapi.com/claude3';
+            const API_URL = 'https://open-ai21.p.rapidapi.com/chatgpt';
             const API_KEY = 'cd5398045fmsh097aa728517c5e2p142dfbjsn56474f130c02';
             
             // Calculate days until deadline
@@ -838,14 +838,29 @@
             }
 
             const prompt = `
-            You are an AI learning assistant. Split the following learning material into ${daysDiff} daily segments for optimal learning before the deadline.
+            You are an AI learning assistant. Split the following learning material: ${content} into daily segments for exactly ${daysDiff} days with optimal learning before the deadline.
 
             Material Title: ${materialTitle}
             Content: ${content}
             Days Available: ${daysDiff}
-            Deadline: ${deadline}
+            Deadline: ${deadline} `;
 
-            Please respond with a JSON array containing daily learning segments in this exact format:
+            try {
+                const response = await fetch(API_URLxcv, {
+                    method: 'POST',
+                    headers: {
+                        'x-rapidapi-key': API_KEY,
+                        'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'system',
+                                content: `You are a learning optimization AI. Always respond with valid JSON arrays for learning schedules. 
+                                you use should not generate your own content instead you should split the available given content for ${daysDiff} 
+                                day. which mean you have segment the entire data into ${daysDiff} sengemts. exact same artical should be displayed in the 
+                                segment which is extracted from the content given.only respond with a JSON array containing daily learning segments in this exact format:
             [
                 {
                     "day": 1,
@@ -861,86 +876,142 @@
             - Distribute content logically across available days
             - Start with fundamentals and build complexity
             - Include review sessions before deadline
-            - Each day should have 30-60 minutes of content
             - Make titles engaging and descriptive
             - Base the content on the actual material provided
-            `;
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'x-rapidapi-key': API_KEY,
-                        'x-rapidapi-host': 'open-ai21.p.rapidapi.com',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: 'system',
-                                content: 'You are a learning optimization AI. Always respond with valid JSON arrays for learning schedules.'
+            `
                             },
                             {
                                 role: 'user',
                                 content: prompt
                             }
                         ],
-                        web_access: false
+                        web_access: false,
+		temperature: 0.9,
+		top_k: 5,
+		top_p: 0.9,
+		max_tokens: 10000
                     })
                 });
 
                 const data = await response.json();
                 
                 // Parse the AI response
-                let segments;
-                try {
-                    // Try to extract JSON from the response
-                    const jsonMatch = data.result.match(/\[[\s\S]*\]/);
-                    if (jsonMatch) {
-                        segments = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error('No JSON found in response');
-                    }
-                } catch (parseError) {
-                    console.error('JSON parsing error:', parseError);
-                    // Fallback: create simple segments
-                    segments = createFallbackSegments(content, daysDiff, deadline, materialTitle);
-                }
+                parseLargeJsonResponse(data) 
 
-                return segments;
+                
             } catch (error) {
                 console.error('AI API Error:', error);
-                // Fallback: create simple segments
+                console.log("so now splitting mannually")
                 return createFallbackSegments(content, daysDiff, deadline, materialTitle);
             }
         }
 
         // Fallback function to create segments when AI fails
-        function createFallbackSegments(content, daysDiff, deadline, materialTitle) {
-            const segments = [];
-            const today = new Date();
-            const contentLength = content.length;
-            const segmentSize = Math.ceil(contentLength / daysDiff);
-            
-            for (let i = 0; i < daysDiff; i++) {
-                const segmentDate = new Date(today);
-                segmentDate.setDate(today.getDate() + i);
-                
-                const startIndex = i * segmentSize;
-                const endIndex = Math.min((i + 1) * segmentSize, contentLength);
-                const segmentContent = content.substring(startIndex, endIndex);
-                
-                segments.push({
-                    day: i + 1,
-                    date: segmentDate.toISOString().split('T')[0],
-                    title: `Day ${i + 1}: ${materialTitle} - Part ${i + 1}`,
-                    content: segmentContent || `Study section ${i + 1} of ${materialTitle}. Focus on understanding key concepts and take notes.`,
-                    duration: "45 minutes",
-                    objectives: [`Complete part ${i + 1}`, "Take comprehensive notes", "Review previous concepts"]
-                });
+      function createFallbackSegments(content, daysDiff, deadline, materialTitle) {
+    const segments = [];
+    const today = new Date();
+    
+    if (daysDiff <= 0) {
+        return [];
+    }
+
+    // Split content into sentences (handles '.', '!', '?' followed by whitespace or end)
+    let sentences = [];
+    let current = '';
+    for (let i = 0; i < content.length; i++) {
+        let char = content[i];
+        current += char;
+        if ('.!?'.includes(char)) {
+            // Check if next char is whitespace or end of content
+            if (i + 1 >= content.length || /\s/.test(content[i + 1])) {
+                sentences.push(current);
+                current = '';
             }
-            
-            return segments;
+        }
+    }
+    if (current) sentences.push(current); // Add any remaining text
+
+    let totalSentences = sentences.length;
+    let baseSentences = Math.floor(totalSentences / daysDiff);
+    let remainder = totalSentences % daysDiff;
+    let sentenceIndex = 0;
+
+    for (let i = 0; i < daysDiff; i++) {
+        const segmentDate = new Date(today);
+        segmentDate.setDate(today.getDate() + i);
+        
+        // Calculate sentences for this segment
+        let segmentSize = baseSentences + (i < remainder ? 1 : 0);
+        let segmentContent = '';
+
+        if (segmentSize > 0 && sentenceIndex < totalSentences) {
+            segmentContent = sentences
+                .slice(sentenceIndex, sentenceIndex + segmentSize)
+                .join(' ')
+                .trim();
+            sentenceIndex += segmentSize;
+        }
+
+        // Fallback placeholder if no content
+        if (!segmentContent) {
+            segmentContent = `Study section ${i + 1} of ${materialTitle}. Focus on understanding key concepts and take notes.`;
+        }
+
+        segments.push({
+            day: i + 1,
+            date: segmentDate.toISOString().split('T')[0],
+            title: `Day ${i + 1}: ${materialTitle} - Part ${i + 1}`,
+            content: segmentContent,
+            duration: "45 minutes",
+            objectives: [
+                `Complete part ${i + 1}`,
+                "Take comprehensive notes",
+                "Review previous concepts"
+            ]
+        });
+    }
+    
+    return segments;
+}
+
+        function parseLargeJsonResponse(text) {
+            console.log(`this is the responce from api :${text}`)
+            try {
+                // First try standard parsing
+                return JSON.parse(text);
+            } catch (e) {
+                console.log("Standard parse failed, trying advanced repair...");
+                
+                // Attempt to extract JSON from the response
+                const jsonStart = text.indexOf('[');
+                const jsonEnd = text.lastIndexOf(']') + 1;
+                
+                if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                    const jsonStr = text.substring(jsonStart, jsonEnd);
+                    
+                    try {
+                        const value = JSON.parse(jsonStr);
+                        console.log(`this is prased json file : ${value}`)
+                        return JSON.parse(jsonStr);
+                    } catch (e) {
+                        console.log("Extracted JSON parse failed, trying repair...");
+                        
+                        // More advanced repair for common issues
+                        const repaired = jsonStr
+                            .replace(/(\w+):/g, '"$1":') // Add quotes around keys
+                            .replace(/'/g, '"') // Replace single quotes with double
+                            .replace(/,\s*}/g, '}') // Remove trailing commas
+                            .replace(/,\s*]/g, ']'); // Remove trailing commas
+                        
+                       
+                        const value1 = JSON.parse(repaired);
+                        console.log(`this is prased json file : ${value1}`)
+                            return JSON.parse(repaired);                       
+                    }
+                }
+                
+                throw new Error('No valid JSON found in response');
+            }
         }
 
         // Add to calendar function (Enhanced)
@@ -1017,7 +1088,7 @@
                 const learningData = {
                     materialId: materialId,
                     title: material.filename,
-                    content: material.content || `Study material: ${material.filename}`,
+                    content: material.content,
                     type: material.type
                 };
 
@@ -1227,15 +1298,21 @@
             const materialId = parseInt(card.dataset.id);
             
             if (confirm('Are you sure you want to delete this material?')) {
+                // Remove from materials
                 materials = materials.filter(m => m.id !== materialId);
                 saveMaterials();
+                
+                // Remove related calendar tasks
+                let tasks = JSON.parse(localStorage.getItem('studyTasks') || '[]');
+                tasks = tasks.filter(task => task.materialId !== materialId);
+                localStorage.setItem('studyTasks', JSON.stringify(tasks));
                 
                 // Animate removal
                 card.style.transform = 'translateX(100%)';
                 card.style.opacity = '0';
                 setTimeout(() => {
                     renderMaterials();
-                    showNotification('Material deleted successfully!');
+                    showNotification('Material & related tasks deleted successfully!');
                 }, 300);
             }
         }
@@ -1318,30 +1395,12 @@
                 materials = [
                     {
                         id: 1,
-                        filename: 'Physics Theory.pdf',
+                        filename: 'sample.pdf',
                         type: 'theory',
                         deadline: '2024-12-15',
                         progress: 75,
                         content: 'Quantum mechanics is a fundamental theory in physics that provides a description of the physical properties of nature at the scale of atoms and subatomic particles. It is the foundation of all quantum physics including quantum chemistry, quantum field theory, quantum technology, and quantum information science. The theory was developed in the early 20th century and has been extensively tested and verified through experiments.',
                         fileType: 'application/pdf'
-                    },
-                    {
-                        id: 2,
-                        filename: 'Chemistry Formulas.jpg',
-                        type: 'diagram',
-                        deadline: '2024-12-20',
-                        progress: 40,
-                        content: 'Chemical formulas and equations represent the composition and reactions of chemical compounds. Understanding molecular structures, bonding patterns, and reaction mechanisms is essential for mastering chemistry. Key concepts include: 1) Molecular formulas showing atom ratios, 2) Structural formulas showing bond arrangements, 3) Chemical equations showing reactants and products, 4) Balancing equations for conservation of mass.',
-                        fileType: 'image/jpeg'
-                    },
-                    {
-                        id: 3,
-                        filename: 'Math Problems.txt',
-                        type: 'problem',
-                        deadline: '2024-12-18',
-                        progress: 90,
-                        content: 'Advanced calculus problems involving derivatives, integrals, and differential equations. Practice with limits, continuity, and applications in physics and engineering. Topics covered: 1) Limits and continuity, 2) Derivatives and applications, 3) Integration techniques, 4) Differential equations, 5) Series and sequences, 6) Multivariable calculus.',
-                        fileType: 'text/plain'
                     }
                 ];
                 saveMaterials();
