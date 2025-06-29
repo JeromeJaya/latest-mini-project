@@ -699,8 +699,30 @@
             localStorage.setItem('materials', JSON.stringify(materials));
         }
 
+        // Update material progress based on completed tasks
+        function updateMaterialProgress() {
+            const learningSchedule = JSON.parse(localStorage.getItem('learningSchedule')) || [];
+            
+            materials.forEach(material => {
+                const materialTasks = learningSchedule.filter(task => 
+                    task.materialId === material.id && task.type !== 'revision'
+                );
+                
+                if (materialTasks.length > 0) {
+                    const completedTasks = materialTasks.filter(task => task.completed);
+                    const progressPercentage = Math.round((completedTasks.length / materialTasks.length) * 100);
+                    material.progress = progressPercentage;
+                }
+            });
+            
+            saveMaterials();
+        }
+
         // Render materials grid
         function renderMaterials() {
+            // Update progress before rendering
+            updateMaterialProgress();
+            
             if (materials.length === 0) {
                 materialsGrid.innerHTML = `
                     <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: rgba(255,255,255,0.6);">
@@ -756,9 +778,9 @@
                         
                         <div class="material-footer">
                             <div class="progress-container">
-                                <div class="progress-label">Progress: ${material.progress}%</div>
+                                <div class="progress-label">Progress: ${material.progress || 0}%</div>
                                 <div class="progress-bar">
-                                    <div class="progress-fill" style="width: ${material.progress}%"></div>
+                                    <div class="progress-fill" style="width: ${material.progress || 0}%"></div>
                                 </div>
                             </div>
                             <div class="material-buttons">
@@ -1220,9 +1242,14 @@
             }
         });
 
-        // Initialize
+        // Initialize and refresh materials every 5 seconds to catch progress updates
         window.addEventListener('DOMContentLoaded', () => {
             loadMaterials();
+            
+            // Refresh materials periodically to update progress
+            setInterval(() => {
+                renderMaterials();
+            }, 5000);
         });
 
         // Make functions globally available

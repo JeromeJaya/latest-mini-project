@@ -34,7 +34,7 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 2rem;
         }
@@ -130,7 +130,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             margin-bottom: 3rem;
-            min-height: 800px;
         }
 
         .calendar-header {
@@ -157,12 +156,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
 
         .nav-btn:hover {
             background: var(--neon);
             color: var(--dark);
             transform: scale(1.1);
+        }
+
+        .nav-btn-label {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
         }
 
         .current-month {
@@ -208,7 +218,7 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 12px;
+            gap: 8px;
         }
 
         .day-header {
@@ -219,7 +229,7 @@
         }
 
         .calendar-day {
-            min-height: 160px;
+            min-height: 120px;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 10px;
             padding: 0.8rem;
@@ -235,26 +245,10 @@
             border-color: rgba(0, 255, 136, 0.2);
         }
 
-        .calendar-day.drag-over {
-            border-color: var(--neon);
-            background: rgba(0, 255, 136, 0.1);
-            transform: scale(1.02);
-        }
-
         .day-number {
             font-size: 1.2rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-block;
-            padding: 5px 8px;
-            border-radius: 8px;
-        }
-
-        .day-number:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(1.1);
         }
 
         .task-item {
@@ -262,24 +256,12 @@
             padding: 0.3rem 0.5rem;
             border-radius: 5px;
             margin-bottom: 0.3rem;
-            cursor: grab;
+            cursor: pointer;
             position: relative;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .task-item:active {
-            cursor: grabbing;
-        }
-
-        .task-item.dragging {
-            opacity: 0.5;
-            transform: rotate(5deg);
         }
 
         .task-item:hover {
@@ -303,45 +285,27 @@
             border-left: 3px solid var(--primary);
         }
 
+        .task-item.revision {
+            background: rgba(255, 165, 0, 0.15);
+            border-left: 3px solid #ffa500;
+        }
+
         .task-item.ai-generated::after {
             content: '🤖';
             position: absolute;
-            right: 25px;
+            right: 5px;
             top: 50%;
             transform: translateY(-50%);
             font-size: 0.7rem;
         }
 
-        .task-content {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .task-delete-btn {
-            background: var(--pending);
-            border: none;
-            color: white;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            cursor: pointer;
+        .task-item.revision::after {
+            content: '🔄';
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
             font-size: 0.7rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: all 0.3s ease;
-            margin-left: 5px;
-        }
-
-        .task-item:hover .task-delete-btn {
-            opacity: 1;
-        }
-
-        .task-delete-btn:hover {
-            background: #ff1a1a;
-            transform: scale(1.2);
         }
 
         .add-task-btn {
@@ -369,12 +333,13 @@
         }
 
         .today .day-number {
+            display: inline-block;
             background: var(--neon);
             color: var(--dark);
-            border-radius: 50%;
             width: 30px;
             height: 30px;
-            line-height: 20px;
+            border-radius: 50%;
+            line-height: 30px;
             text-align: center;
         }
 
@@ -634,193 +599,6 @@
             margin-right: 0.5rem;
         }
 
-        /* Day Detail Modal */
-        .day-detail-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2500;
-            backdrop-filter: blur(5px);
-        }
-
-        .day-detail-content {
-            background: rgba(30, 41, 59, 0.95);
-            border-radius: 20px;
-            padding: 2rem;
-            max-width: 800px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-            animation: modalSlideIn 0.3s ease-out;
-        }
-
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .day-detail-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .day-detail-title {
-            font-size: 1.8rem;
-            color: var(--neon);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .day-tasks-container {
-            min-height: 400px;
-        }
-
-        .time-slot {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .time-slot:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(0, 255, 136, 0.3);
-        }
-
-        .time-slot.drop-zone {
-            border-color: var(--neon);
-            background: rgba(0, 255, 136, 0.1);
-        }
-
-        .time-slot-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .time-label {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--neon);
-        }
-
-        .time-slot-tasks {
-            min-height: 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .time-task-item {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.8rem;
-            cursor: grab;
-            transition: all 0.3s ease;
-            border-left: 3px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .time-task-item:active {
-            cursor: grabbing;
-        }
-
-        .time-task-item.dragging {
-            opacity: 0.5;
-            transform: rotate(3deg);
-        }
-
-        .time-task-item:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateX(5px);
-        }
-
-        .time-task-item.completed {
-            background: rgba(0, 204, 102, 0.15);
-            border-left-color: var(--completed);
-            text-decoration: line-through;
-            opacity: 0.7;
-        }
-
-        .time-task-item.ai-generated {
-            border-left-color: var(--primary);
-        }
-
-        .time-task-content {
-            flex: 1;
-        }
-
-        .time-task-title {
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-        }
-
-        .time-task-meta {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .time-task-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .time-task-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 0.8rem;
-        }
-
-        .time-task-btn:hover {
-            background: var(--neon);
-            color: var(--dark);
-            transform: scale(1.1);
-        }
-
-        .time-task-btn.delete:hover {
-            background: var(--pending);
-        }
-
-        .empty-time-slot {
-            text-align: center;
-            color: rgba(255, 255, 255, 0.4);
-            font-style: italic;
-            padding: 1rem;
-        }
-
         @keyframes float {
             0%, 100% { transform: translate(0, 0); }
             25% { transform: translate(-20px, -20px); }
@@ -864,15 +642,6 @@
                 flex-direction: column;
                 gap: 0.5rem;
             }
-
-            .day-detail-content {
-                width: 95%;
-                padding: 1.5rem;
-            }
-
-            .time-slot {
-                padding: 0.8rem;
-            }
         }
     </style>
 </head>
@@ -905,6 +674,7 @@
                 <button class="time-period-btn" data-period="afternoon">Afternoon</button>
                 <button class="time-period-btn" data-period="evening">Evening</button>
                 <button class="time-period-btn" data-period="night">Night</button>
+                <button class="time-period-btn active" data-period="all">All</button>
             </div>
         </div>
 
@@ -932,19 +702,24 @@
             <div class="calendar-header">
                 <div class="calendar-nav">
                     <button class="nav-btn" id="prevYear">
-                        <i class="fas fa-chevrons-left"></i>
+                        <i class="fas fa-angle-double-left"></i>
+                        <div class="nav-btn-label">Previous Year</div>
                     </button>
                     <button class="nav-btn" id="prevMonth">
                         <i class="fas fa-chevron-left"></i>
+                        <div class="nav-btn-label">Previous Month</div>
                     </button>
                     <button class="nav-btn" id="todayBtn">
                         <i class="fas fa-calendar-day"></i>
+                        <div class="nav-btn-label">Today</div>
                     </button>
                     <button class="nav-btn" id="nextMonth">
                         <i class="fas fa-chevron-right"></i>
+                        <div class="nav-btn-label">Next Month</div>
                     </button>
                     <button class="nav-btn" id="nextYear">
-                        <i class="fas fa-chevrons-right"></i>
+                        <i class="fas fa-angle-double-right"></i>
+                        <div class="nav-btn-label">Next Year</div>
                     </button>
                 </div>
                 <div class="current-month" id="currentMonth">September 2023</div>
@@ -1035,24 +810,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Day Detail Modal -->
-    <div class="day-detail-modal" id="dayDetailModal">
-        <div class="day-detail-content">
-            <div class="day-detail-header">
-                <h2 class="day-detail-title" id="dayDetailTitle">
-                    <i class="fas fa-calendar-day"></i>
-                    <span>Day Details</span>
-                </h2>
-                <button class="close-modal" id="closeDayModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="day-tasks-container" id="dayTasksContainer">
-                <!-- Time slots will be populated here -->
-            </div>
-        </div>
-    </div>
     
     <div class="notification-center" id="notificationCenter">
         <!-- Notifications will be added here dynamically -->
@@ -1062,6 +819,7 @@
         // Enhanced tasks data with AI-generated learning segments
         let tasks = [];
         let learningSchedule = [];
+        let currentTimeFilter = 'all';
 
         // Calendar functionality
         let currentDate = new Date();
@@ -1071,13 +829,6 @@
 
         const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-        // Time slots for day detail view
-        const timeSlots = [
-            '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-            '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-            '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
-        ];
 
         // DOM Elements
         const calendarGrid = document.getElementById('calendarGrid');
@@ -1096,16 +847,20 @@
         const taskModal = document.getElementById('taskModal');
         const closeModal = document.getElementById('closeModal');
         const notificationCount = document.getElementById('notificationCount');
-        const dayDetailModal = document.getElementById('dayDetailModal');
-        const closeDayModal = document.getElementById('closeDayModal');
-        const dayDetailTitle = document.getElementById('dayDetailTitle');
-        const dayTasksContainer = document.getElementById('dayTasksContainer');
 
         // Statistics elements
         const totalTasksEl = document.getElementById('totalTasks');
         const completedTasksEl = document.getElementById('completedTasks');
         const aiGeneratedTasksEl = document.getElementById('aiGeneratedTasks');
         const upcomingDeadlinesEl = document.getElementById('upcomingDeadlines');
+
+        // Time period mapping
+        const timePeriods = {
+            morning: { start: '06:00', end: '12:00' },
+            afternoon: { start: '12:00', end: '17:00' },
+            evening: { start: '17:00', end: '21:00' },
+            night: { start: '21:00', end: '06:00' }
+        };
 
         // Load learning schedule from localStorage
         function loadLearningSchedule() {
@@ -1125,27 +880,49 @@
                     date: segment.date,
                     time: segment.time || "15:00",
                     completed: segment.completed || false,
-                    type: "ai-generated",
+                    type: segment.type || "ai-generated",
                     materialTitle: segment.materialTitle,
                     materialType: segment.materialType,
                     content: segment.content,
                     duration: segment.duration,
                     objectives: segment.objectives,
-                    day: segment.day
+                    day: segment.day,
+                    materialId: segment.materialId,
+                    revisionNumber: segment.revisionNumber
                 }))
             ];
         }
 
+        // Filter tasks by time period
+        function filterTasksByTime(tasksToFilter, period) {
+            if (period === 'all') return tasksToFilter;
+            
+            const timeRange = timePeriods[period];
+            if (!timeRange) return tasksToFilter;
+            
+            return tasksToFilter.filter(task => {
+                const taskTime = task.time || '15:00';
+                
+                if (period === 'night') {
+                    // Night spans across midnight
+                    return taskTime >= timeRange.start || taskTime < timeRange.end;
+                } else {
+                    return taskTime >= timeRange.start && taskTime < timeRange.end;
+                }
+            });
+        }
+
         // Update statistics
         function updateStatistics() {
-            const total = tasks.length;
-            const completed = tasks.filter(task => task.completed).length;
-            const aiGenerated = tasks.filter(task => task.type === 'ai-generated').length;
+            const filteredTasks = filterTasksByTime(tasks, currentTimeFilter);
+            const total = filteredTasks.length;
+            const completed = filteredTasks.filter(task => task.completed).length;
+            const aiGenerated = filteredTasks.filter(task => task.type === 'ai-generated').length;
             
             // Calculate upcoming deadlines (within 7 days)
             const today = new Date();
             const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const upcoming = tasks.filter(task => {
+            const upcoming = filteredTasks.filter(task => {
                 const taskDate = new Date(task.date);
                 return taskDate >= today && taskDate <= nextWeek && !task.completed;
             }).length;
@@ -1223,7 +1000,7 @@
                 }
                 
                 day.innerHTML = `
-                    <div class="day-number" data-date="${dateStr}">${i}</div>
+                    <div class="day-number">${i}</div>
                     <div class="tasks-container" id="tasks-${dateStr}"></div>
                     <button class="add-task-btn" data-date="${dateStr}">
                         <i class="fas fa-plus"></i>
@@ -1251,276 +1028,6 @@
                     document.getElementById('taskTitle').focus();
                 });
             });
-
-            // Add event listeners to day numbers for day detail view
-            document.querySelectorAll('.day-number[data-date]').forEach(dayNumber => {
-                dayNumber.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const date = dayNumber.dataset.date;
-                    openDayDetailModal(date);
-                });
-            });
-
-            // Add drag and drop functionality
-            setupDragAndDrop();
-        }
-
-        // Open day detail modal
-        function openDayDetailModal(date) {
-            const selectedDate = new Date(date);
-            const dayName = days[selectedDate.getDay()];
-            const dayNumber = selectedDate.getDate();
-            const monthName = months[selectedDate.getMonth()];
-            
-            dayDetailTitle.innerHTML = `
-                <i class="fas fa-calendar-day"></i>
-                <span>${dayName}, ${monthName} ${dayNumber}</span>
-            `;
-            
-            renderDayTasks(date);
-            dayDetailModal.style.display = 'flex';
-        }
-
-        // Render tasks for a specific day in time slots
-        function renderDayTasks(date) {
-            const dayTasks = tasks.filter(task => task.date === date);
-            
-            // Group tasks by time
-            const tasksByTime = {};
-            dayTasks.forEach(task => {
-                const timeKey = task.time || '15:00';
-                if (!tasksByTime[timeKey]) {
-                    tasksByTime[timeKey] = [];
-                }
-                tasksByTime[timeKey].push(task);
-            });
-            
-            // Sort tasks by time within each slot
-            Object.keys(tasksByTime).forEach(timeKey => {
-                tasksByTime[timeKey].sort((a, b) => a.title.localeCompare(b.title));
-            });
-            
-            dayTasksContainer.innerHTML = timeSlots.map(timeSlot => {
-                const slotTasks = tasksByTime[timeSlot] || [];
-                
-                return `
-                    <div class="time-slot" data-time="${timeSlot}" data-date="${date}">
-                        <div class="time-slot-header">
-                            <div class="time-label">${formatTime(timeSlot)}</div>
-                        </div>
-                        <div class="time-slot-tasks" data-time="${timeSlot}">
-                            ${slotTasks.length > 0 ? 
-                                slotTasks.map(task => createTimeTaskHTML(task)).join('') :
-                                '<div class="empty-time-slot">No tasks scheduled</div>'
-                            }
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            // Setup drag and drop for time slots
-            setupTimeSlotDragAndDrop();
-        }
-
-        // Create HTML for a task in time slot view
-        function createTimeTaskHTML(task) {
-            return `
-                <div class="time-task-item ${task.completed ? 'completed' : ''} ${task.type === 'ai-generated' ? 'ai-generated' : ''}" 
-                     draggable="true" data-task-id="${task.id}">
-                    <div class="time-task-content">
-                        <div class="time-task-title">${task.title}</div>
-                        <div class="time-task-meta">
-                            ${task.materialTitle ? `Material: ${task.materialTitle}` : ''}
-                            ${task.duration ? ` • Duration: ${task.duration}min` : ''}
-                        </div>
-                    </div>
-                    <div class="time-task-actions">
-                        <button class="time-task-btn" onclick="toggleTaskCompletion(${task.id})" title="Toggle completion">
-                            <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i>
-                        </button>
-                        <button class="time-task-btn" onclick="showTaskDetails(${JSON.stringify(task).replace(/"/g, '&quot;')})" title="View details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="time-task-btn delete" onclick="deleteTask(${task.id})" title="Delete task">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Setup drag and drop for time slots
-        function setupTimeSlotDragAndDrop() {
-            const timeTaskItems = document.querySelectorAll('.time-task-item');
-            const timeSlots = document.querySelectorAll('.time-slot-tasks');
-            
-            // Make tasks draggable
-            timeTaskItems.forEach(item => {
-                item.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', item.dataset.taskId);
-                    item.classList.add('dragging');
-                });
-                
-                item.addEventListener('dragend', () => {
-                    item.classList.remove('dragging');
-                });
-            });
-            
-            // Make time slots droppable
-            timeSlots.forEach(slot => {
-                slot.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    slot.parentElement.classList.add('drop-zone');
-                });
-                
-                slot.addEventListener('dragleave', (e) => {
-                    if (!slot.contains(e.relatedTarget)) {
-                        slot.parentElement.classList.remove('drop-zone');
-                    }
-                });
-                
-                slot.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    slot.parentElement.classList.remove('drop-zone');
-                    
-                    const taskId = e.dataTransfer.getData('text/plain');
-                    const newTime = slot.dataset.time;
-                    const date = slot.parentElement.dataset.date;
-                    
-                    moveTaskToTime(taskId, newTime, date);
-                });
-            });
-        }
-
-        // Move task to different time slot
-        function moveTaskToTime(taskId, newTime, date) {
-            const task = tasks.find(t => t.id == taskId);
-            if (!task) return;
-            
-            // Update task time
-            task.time = newTime;
-            
-            // Update in learning schedule if it's an AI-generated task
-            if (task.type === 'ai-generated') {
-                const scheduleItem = learningSchedule.find(s => s.id == taskId);
-                if (scheduleItem) {
-                    scheduleItem.time = newTime;
-                    localStorage.setItem('learningSchedule', JSON.stringify(learningSchedule));
-                }
-            }
-            
-            // Re-render the day view
-            renderDayTasks(date);
-            
-            // Re-render calendar tasks
-            renderTasks();
-            
-            showNotification("Task Moved", `"${task.title}" moved to ${formatTime(newTime)}`);
-        }
-
-        // Format time for display
-        function formatTime(time24) {
-            const [hours, minutes] = time24.split(':');
-            const hour12 = hours % 12 || 12;
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            return `${hour12}:${minutes} ${ampm}`;
-        }
-
-        // Delete task function
-        function deleteTask(taskId) {
-            if (!confirm('Are you sure you want to delete this task?')) return;
-            
-            const taskIndex = tasks.findIndex(t => t.id == taskId);
-            if (taskIndex === -1) return;
-            
-            const task = tasks[taskIndex];
-            
-            // Remove from tasks array
-            tasks.splice(taskIndex, 1);
-            
-            // Remove from learning schedule if it's an AI-generated task
-            if (task.type === 'ai-generated') {
-                const scheduleIndex = learningSchedule.findIndex(s => s.id == taskId);
-                if (scheduleIndex !== -1) {
-                    learningSchedule.splice(scheduleIndex, 1);
-                    localStorage.setItem('learningSchedule', JSON.stringify(learningSchedule));
-                }
-            }
-            
-            // Re-render everything
-            renderTasks();
-            updateStatistics();
-            
-            // Re-render day view if modal is open
-            if (dayDetailModal.style.display === 'flex') {
-                const currentDate = document.querySelector('.time-slot').dataset.date;
-                renderDayTasks(currentDate);
-            }
-            
-            showNotification("Task Deleted", `"${task.title}" has been deleted`);
-        }
-
-        // Setup drag and drop for calendar
-        function setupDragAndDrop() {
-            const taskItems = document.querySelectorAll('.task-item');
-            const calendarDays = document.querySelectorAll('.calendar-day');
-            
-            // Make tasks draggable
-            taskItems.forEach(item => {
-                item.addEventListener('dragstart', (e) => {
-                    e.dataTransfer.setData('text/plain', item.dataset.taskId);
-                    item.classList.add('dragging');
-                });
-                
-                item.addEventListener('dragend', () => {
-                    item.classList.remove('dragging');
-                });
-            });
-            
-            // Make calendar days droppable
-            calendarDays.forEach(day => {
-                day.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    day.classList.add('drag-over');
-                });
-                
-                day.addEventListener('dragleave', () => {
-                    day.classList.remove('drag-over');
-                });
-                
-                day.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    day.classList.remove('drag-over');
-                    
-                    const taskId = e.dataTransfer.getData('text/plain');
-                    const newDate = day.dataset.date;
-                    
-                    if (newDate) {
-                        moveTaskToDate(taskId, newDate);
-                    }
-                });
-            });
-        }
-
-        // Move task to different date
-        function moveTaskToDate(taskId, newDate) {
-            const task = tasks.find(t => t.id == taskId);
-            if (!task) return;
-            
-            const oldDate = task.date;
-            task.date = newDate;
-            
-            // Update in learning schedule if it's an AI-generated task
-            if (task.type === 'ai-generated') {
-                const scheduleItem = learningSchedule.find(s => s.id == taskId);
-                if (scheduleItem) {
-                    scheduleItem.date = newDate;
-                    localStorage.setItem('learningSchedule', JSON.stringify(learningSchedule));
-                }
-            }
-            
-            renderTasks();
-            showNotification("Task Moved", `"${task.title}" moved from ${oldDate} to ${newDate}`);
         }
 
         // Render tasks on calendar
@@ -1530,76 +1037,107 @@
                 container.innerHTML = '';
             });
 
-            tasks.forEach(task => {
+            // Filter tasks by current time period
+            const filteredTasks = filterTasksByTime(tasks, currentTimeFilter);
+
+            filteredTasks.forEach(task => {
                 const taskDate = new Date(task.date);
                 const formattedDate = formatDate(taskDate);
                 const taskContainer = document.querySelector(`.calendar-day[data-date="${formattedDate}"] .tasks-container`);
                 
                 if (taskContainer) {
                     const taskEl = document.createElement('div');
-                    taskEl.className = `task-item ${task.completed ? 'completed' : 'pending'} ${task.type === 'ai-generated' ? 'ai-generated' : ''}`;
-                    taskEl.title = task.title;
-                    taskEl.draggable = true;
-                    taskEl.dataset.taskId = task.id;
+                    let taskClass = `task-item ${task.completed ? 'completed' : 'pending'}`;
                     
+                    if (task.type === 'ai-generated') {
+                        taskClass += ' ai-generated';
+                    } else if (task.type === 'revision') {
+                        taskClass += ' revision';
+                    }
+                    
+                    taskEl.className = taskClass;
+                    taskEl.title = task.title;
                     taskEl.innerHTML = `
-                        <div class="task-content">
-                            <i class="fas fa-${getTaskIcon(task)}"></i> ${task.title}
-                            <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 3px;">${task.time}</div>
-                        </div>
-                        <button class="task-delete-btn" onclick="deleteTask(${task.id})" title="Delete task">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <i class="fas fa-${getTaskIcon(task)}"></i> ${task.title}
+                        <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 3px;">${task.time}</div>
                     `;
                     
                     taskEl.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        if (!e.target.closest('.task-delete-btn')) {
-                            showTaskDetails(task);
-                        }
+                        showTaskDetails(task);
                     });
                     
                     taskContainer.appendChild(taskEl);
                 }
             });
-            
-            // Re-setup drag and drop after rendering
-            setupDragAndDrop();
         }
 
-        // Replace this in the scheduler page's script
+        // Show task details in modal
         function showTaskDetails(task) {
             const modalTitle = document.getElementById('modalTaskTitle');
             const modalContent = document.getElementById('modalTaskContent');
             
             modalTitle.textContent = task.title;
             
+            let actionButton = '';
+            if (task.type === 'ai-generated' || task.type === 'revision') {
+                actionButton = `
+                    <div style="margin-top: 2rem; text-align: center;">
+                        <button class="btn btn-primary" onclick="startLearning(${task.id})">
+                            <i class="fas fa-play"></i> Start Learning
+                        </button>
+                    </div>
+                `;
+            }
+            
             modalContent.innerHTML = `
                 <div style="margin-bottom: 1rem;">
-                    <strong>Material:</strong> ${task.materialTitle || 'N/A'}
+                    <strong>Type:</strong> ${task.type === 'ai-generated' ? 'AI Generated' : task.type === 'revision' ? 'Revision' : 'Manual'}
+                    ${task.revisionNumber ? ` (Revision ${task.revisionNumber})` : ''}
                 </div>
                 <div style="margin-bottom: 1rem;">
-                    <strong>Content:</strong>
-                    <p style="margin-top: 0.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
-                        ${task.content || 'No content available'}
-                    </p>
+                    <strong>Date:</strong> ${task.date}
                 </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Time:</strong> ${task.time}
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <strong>Status:</strong> ${task.completed ? 'Completed' : 'Pending'}
+                </div>
+                ${task.materialTitle ? `
+                    <div style="margin-bottom: 1rem;">
+                        <strong>Material:</strong> ${task.materialTitle}
+                    </div>
+                ` : ''}
+                ${task.content ? `
+                    <div style="margin-bottom: 1rem;">
+                        <strong>Content:</strong>
+                        <p style="margin-top: 0.5rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                            ${task.content.substring(0, 200)}${task.content.length > 200 ? '...' : ''}
+                        </p>
+                    </div>
+                ` : ''}
                 <div style="margin-top: 2rem; text-align: center;">
-                    <button class="btn btn-primary" id="start-learning-btn">
-                        <i class="fas fa-play"></i> Start Learning
+                    <button class="btn btn-primary" onclick="toggleTaskCompletion(${task.id})" style="margin-right: 1rem;">
+                        <i class="fas fa-${task.completed ? 'undo' : 'check'}"></i> 
+                        ${task.completed ? 'Mark as Pending' : 'Mark as Completed'}
                     </button>
                 </div>
+                ${actionButton}
             `;
             
-            // Add event listener to the button
-            document.getElementById('start-learning-btn').addEventListener('click', () => {
-                // Save the task to localStorage
-                localStorage.setItem('currentLearningSegment', JSON.stringify(task));
-                // Redirect to shorts page
-                window.location.href = 'shorts.html';
-            });
-            
             taskModal.style.display = 'flex';
+        }
+
+        // Start learning function
+        function startLearning(taskId) {
+            const task = tasks.find(t => t.id == taskId);
+            if (task) {
+                // Store task for learning page
+                localStorage.setItem('currentLearningSegment', JSON.stringify(task));
+                // Redirect to learning page
+                window.location.href = 'shorts.html';
+            }
         }
 
         // Toggle task completion
@@ -1609,22 +1147,23 @@
                 task.completed = !task.completed;
                 
                 // Update in learning schedule if it's an AI-generated task
-                if (task.type === 'ai-generated') {
+                if (task.type === 'ai-generated' || task.type === 'revision') {
                     const scheduleItem = learningSchedule.find(s => s.id == taskId);
                     if (scheduleItem) {
                         scheduleItem.completed = task.completed;
+                        
+                        // If marking as completed, add completion date
+                        if (task.completed) {
+                            scheduleItem.completionDate = new Date().toISOString().split('T')[0];
+                        }
+                        
                         localStorage.setItem('learningSchedule', JSON.stringify(learningSchedule));
                     }
                 }
                 
                 renderTasks();
                 updateStatistics();
-                
-                // Re-render day view if modal is open
-                if (dayDetailModal.style.display === 'flex') {
-                    const currentDate = document.querySelector('.time-slot').dataset.date;
-                    renderDayTasks(currentDate);
-                }
+                taskModal.style.display = 'none';
                 
                 showNotification(
                     task.completed ? "Task Completed" : "Task Reopened",
@@ -1651,6 +1190,10 @@
                     code: 'code'
                 };
                 return icons[task.materialType] || 'file-alt';
+            }
+            
+            if (task.type === 'revision') {
+                return 'redo';
             }
             
             // Fallback for manual tasks
@@ -1767,11 +1310,17 @@
             setView('month');
         });
 
+        // Time period filter event listeners
         timePeriodBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 timePeriodBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                showNotification("Time Filter Applied", `Now showing tasks for ${btn.textContent}`);
+                currentTimeFilter = btn.dataset.period;
+                renderTasks();
+                updateStatistics();
+                
+                const periodName = btn.textContent;
+                showNotification("Time Filter Applied", `Now showing tasks for ${periodName}`);
             });
         });
 
@@ -1781,20 +1330,10 @@
             taskModal.style.display = 'none';
         });
 
-        closeDayModal.addEventListener('click', () => {
-            dayDetailModal.style.display = 'none';
-        });
-
-        // Close modals when clicking outside
+        // Close modal when clicking outside
         taskModal.addEventListener('click', (e) => {
             if (e.target === taskModal) {
                 taskModal.style.display = 'none';
-            }
-        });
-
-        dayDetailModal.addEventListener('click', (e) => {
-            if (e.target === dayDetailModal) {
-                dayDetailModal.style.display = 'none';
             }
         });
 
@@ -1818,16 +1357,16 @@
 
         // Make functions globally available
         window.toggleTaskCompletion = toggleTaskCompletion;
-        window.deleteTask = deleteTask;
-        window.showTaskDetails = showTaskDetails;
+        window.startLearning = startLearning;
 
         // Initialize calendar
         initCalendar();
 
         // Simulate Google Calendar integration
         document.querySelector('.notification-btn').addEventListener('click', () => {
-            showNotification("Schedule Overview", `You have ${tasks.filter(t => !t.completed).length} pending tasks and ${tasks.filter(t => t.type === 'ai-generated').length} AI-generated learning segments`);
+            const filteredTasks = filterTasksByTime(tasks, currentTimeFilter);
+            showNotification("Schedule Overview", `You have ${filteredTasks.filter(t => !t.completed).length} pending tasks and ${filteredTasks.filter(t => t.type === 'ai-generated').length} AI-generated learning segments`);
         });
     </script>
-</body>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+</body>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 </html>
