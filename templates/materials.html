@@ -904,6 +904,48 @@
             materialModal.style.display = 'none';
         });
 
+        // Handle file upload - FIXED VERSION
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            files.forEach(file => {
+                // Determine file type and handle accordingly
+                if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+                    // Handle text files
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const content = e.target.result;
+                        addFileAsMaterial(file, content);
+                    };
+                    reader.readAsText(file);
+                } else if (file.type.startsWith('image/')) {
+                    // Handle image files
+                    addFileAsMaterial(file, 'Image file uploaded - content will be extracted when processed');
+                } else {
+                    // Handle other file types (PDF, DOCX, etc.)
+                    addFileAsMaterial(file, 'File uploaded successfully - content will be extracted when processed');
+                }
+            });
+        }
+
+        // Helper function to add file as material
+        function addFileAsMaterial(file, content) {
+            const newMaterial = {
+                id: Date.now() + Math.random(),
+                title: file.name.replace(/\.[^/.]+$/, ""),
+                type: 'theory',
+                content: content,
+                filename: file.name,
+                progress: 0,
+                deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            };
+            
+            materials.push(newMaterial);
+            saveMaterials();
+            renderMaterials();
+            showNotification(`${file.name} uploaded successfully!`, 'success');
+        }
+
         // File upload handling
         fileInput.addEventListener('change', handleFileUpload);
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -923,38 +965,6 @@
             uploadArea.classList.remove('dragover');
             handleFileUpload({ target: { files: e.dataTransfer.files } });
         });
-
-        // Handle file upload
-        function handleFileUpload(event) {
-            const files = Array.from(event.target.files);
-            
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const content = e.target.result;
-                    const newMaterial = {
-                        id: Date.now() + Math.random(),
-                        title: file.name.replace(/\.[^/.]+$/, ""),
-                        type: 'theory',
-                        content: typeof content === 'string' ? content : 'File uploaded successfully',
-                        filename: file.name,
-                        progress: 0,
-                        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                    };
-                    
-                    materials.push(newMaterial);
-                    saveMaterials();
-                    renderMaterials();
-                    showNotification(`${file.name} uploaded successfully!`, 'success');
-                };
-                
-                if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-                    reader.readAsText(file);
-                } else {
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
 
         // Modal controls
         closeModal.addEventListener('click', () => {
