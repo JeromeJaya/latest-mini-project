@@ -881,7 +881,7 @@
             generateLearningSchedule(material);
         }
 
-        // Generate learning schedule
+        // Generate learning schedule - MODIFIED TO DIVIDE BY SENTENCES
         function generateLearningSchedule(material) {
             showNotification('Generating AI learning schedule...', 'success');
 
@@ -903,38 +903,59 @@
             }, 2000);
         }
 
-        // Create learning segments
+        // Create learning segments - MODIFIED TO DIVIDE CONTENT BY SENTENCES
         function createLearningSegments(material) {
             const segments = [];
             const today = new Date();
             const deadline = new Date(material.deadline);
             const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
             
-            // Create segments based on material type and deadline
-            const segmentCount = Math.min(Math.max(3, Math.floor(daysUntilDeadline / 2)), 10);
+            // Ensure we have at least 1 day
+            const totalDays = Math.max(1, daysUntilDeadline);
             
-            for (let i = 0; i < segmentCount; i++) {
+            // Split content into sentences
+            const content = material.content || '';
+            const sentences = content.split(/[.!?]+/).filter(sentence => sentence.trim().length > 0);
+            
+            // Calculate sentences per day (equal distribution)
+            const sentencesPerDay = Math.ceil(sentences.length / totalDays);
+            
+            // Create segments for each day
+            for (let day = 0; day < totalDays; day++) {
                 const segmentDate = new Date(today);
-                segmentDate.setDate(today.getDate() + Math.floor((daysUntilDeadline / segmentCount) * i));
+                segmentDate.setDate(today.getDate() + day);
+                
+                // Get sentences for this day
+                const startIndex = day * sentencesPerDay;
+                const endIndex = Math.min(startIndex + sentencesPerDay, sentences.length);
+                const daySentences = sentences.slice(startIndex, endIndex);
+                
+                // Skip if no sentences for this day
+                if (daySentences.length === 0) continue;
+                
+                // Reconstruct content for this day
+                const dayContent = daySentences.join('. ').trim() + '.';
                 
                 segments.push({
-                    id: Date.now() + i,
+                    id: Date.now() + day,
                     materialId: material.id,
                     materialTitle: material.title,
                     materialType: material.type,
-                    title: `${material.title} - Session ${i + 1}`,
-                    content: material.content,
+                    title: `${material.title} - Day ${day + 1}`,
+                    content: dayContent,
                     date: segmentDate.toISOString().split('T')[0],
-                    time: ['09:00', '14:00', '16:00', '19:00'][i % 4],
+                    time: ['09:00', '14:00', '16:00', '19:00'][day % 4],
                     completed: false,
-                    day: i + 1,
-                    duration: 30 + (i * 10),
+                    day: day + 1,
+                    duration: 30 + (day * 5), // Gradually increase duration
                     objectives: [
-                        `Review key concepts from ${material.title}`,
-                        `Practice problems and examples`,
-                        `Create summary notes`,
-                        `Test understanding with questions`
-                    ]
+                        `Study ${daySentences.length} key concepts from ${material.title}`,
+                        `Review and understand the content thoroughly`,
+                        `Take notes on important points`,
+                        `Practice recall and comprehension`
+                    ],
+                    sentenceCount: daySentences.length,
+                    totalSentences: sentences.length
                 });
             }
             
