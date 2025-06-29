@@ -171,6 +171,7 @@
             align-items: center;
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             transition: transform 0.8s ease-in-out;
             overflow: hidden;
         }
@@ -818,7 +819,7 @@
                 const imageBlob = await response.blob();
                 const imageUrl = URL.createObjectURL(imageBlob);
                 
-                console.log(`Image generated successfully for slide ${slideIndex + 1}`);
+                console.log(`Image generated successfully for slide ${slideIndex + 1}: ${imageUrl}`);
                 
                 return {
                     url: imageUrl,
@@ -898,8 +899,13 @@
                 // Generate image asynchronously
                 generateImageForStory(item.promptOfTheLine, index, storyItems.length)
                     .then(imageData => {
-                        // Update slide with generated image
-                        slide.style.backgroundImage = `url('${imageData.url}')`;
+                        console.log(`Setting background image for slide ${index + 1}: ${imageData.url}`);
+                        
+                        // FIXED: Properly set the background image
+                        slide.style.backgroundImage = `url("${imageData.url}")`;
+                        slide.style.backgroundSize = 'cover';
+                        slide.style.backgroundPosition = 'center';
+                        slide.style.backgroundRepeat = 'no-repeat';
                         
                         // Remove loading indicator
                         const loadingElement = slide.querySelector(`#loading-${index}`);
@@ -913,7 +919,7 @@
                             creditElement.textContent = `Image: ${imageData.source}`;
                         }
                         
-                        console.log(`Slide ${index + 1} image loaded successfully`);
+                        console.log(`Slide ${index + 1} image loaded and applied successfully`);
                     })
                     .catch(error => {
                         console.error(`Failed to load image for slide ${index + 1}:`, error);
