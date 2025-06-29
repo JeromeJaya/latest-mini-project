@@ -409,6 +409,45 @@
             font-size: 1rem;
         }
         
+        /* Voice indicator */
+        .voice-indicator {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .voice-indicator.speaking {
+            display: flex;
+        }
+        
+        .voice-wave {
+            width: 4px;
+            height: 20px;
+            background: #ff8a00;
+            margin: 0 1px;
+            border-radius: 2px;
+            animation: voice-wave 1.5s ease-in-out infinite;
+        }
+        
+        .voice-wave:nth-child(2) { animation-delay: 0.1s; }
+        .voice-wave:nth-child(3) { animation-delay: 0.2s; }
+        .voice-wave:nth-child(4) { animation-delay: 0.3s; }
+        
+        @keyframes voice-wave {
+            0%, 100% { height: 10px; }
+            50% { height: 20px; }
+        }
+        
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -471,6 +510,15 @@
 <body>
     <div class="progress-container">
         <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    
+    <!-- Voice indicator -->
+    <div class="voice-indicator" id="voiceIndicator">
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <div class="voice-wave"></div>
+        <span>Reading story...</span>
     </div>
     
     <div class="container">
@@ -549,8 +597,13 @@
         const materialType = document.getElementById('material-type');
         const contentPreview = document.getElementById('content-preview');
         const autoGenerateBtn = document.getElementById('auto-generate-btn');
+        const voiceIndicator = document.getElementById('voiceIndicator');
 
-       
+        // Voice synthesis variables
+        let currentSpeech = null;
+        let currentSlideIndex = 0;
+        let storyData = [];
+        let isScrolling = false;
         
         // Configuration
         let storySize = 6;
@@ -618,6 +671,62 @@
             const preview = currentMaterial.content?.substring(0, 300) + 
                            (currentMaterial.content?.length > 300 ? '...' : '');
             contentPreview.textContent = preview || 'No content preview available';
+        }
+        
+        // Voice synthesis functions
+        function stopCurrentSpeech() {
+            if (currentSpeech) {
+                window.speechSynthesis.cancel();
+                currentSpeech = null;
+                voiceIndicator.classList.remove('speaking');
+            }
+        }
+        
+        function speakStoryLine(text, slideIndex) {
+            // Stop any current speech
+            stopCurrentSpeech();
+            
+            if (!text || !window.speechSynthesis) return;
+            
+            // Create new speech utterance
+            currentSpeech = new SpeechSynthesisUtterance(text);
+            
+            // Configure speech settings
+            currentSpeech.rate = 0.9; // Slightly slower for better comprehension
+            currentSpeech.pitch = 1.0;
+            currentSpeech.volume = 1.0;
+            
+            // Try to use a more natural voice if available
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice => 
+                voice.name.includes('Google') || 
+                voice.name.includes('Microsoft') ||
+                voice.lang.startsWith('en')
+            );
+            if (preferredVoice) {
+                currentSpeech.voice = preferredVoice;
+            }
+            
+            // Event handlers
+            currentSpeech.onstart = () => {
+                voiceIndicator.classList.add('speaking');
+                console.log(`Started speaking slide ${slideIndex + 1}`);
+            };
+            
+            currentSpeech.onend = () => {
+                voiceIndicator.classList.remove('speaking');
+                currentSpeech = null;
+                console.log(`Finished speaking slide ${slideIndex + 1}`);
+            };
+            
+            currentSpeech.onerror = (event) => {
+                console.error('Speech synthesis error:', event.error);
+                voiceIndicator.classList.remove('speaking');
+                currentSpeech = null;
+            };
+            
+            // Start speaking
+            window.speechSynthesis.speak(currentSpeech);
         }
         
         // Event listeners for size buttons
@@ -843,6 +952,9 @@
         async function displayStorySlides(storyItems) {
             updateProgress(60);
             
+            // Store story data for voice synthesis
+            storyData = storyItems;
+            
             // Generate slides for each story item
             storySlides.innerHTML = `
                 <button class="back-btn" id="back-btn">
@@ -858,6 +970,7 @@
                 slide.className = 'slide';
                 slide.dataset.id = item.id;
                 slide.dataset.keywords = item.keyWords;
+                slide.dataset.storyText = item.story_line; // Store story text for voice synthesis
                 
                 // Add loading indicator
                 slide.innerHTML = `
@@ -869,14 +982,6 @@
                     <div class="slide-content">
                         <h2 class="slide-title">${item.title}</h2>
                         <div class="slide-story">${item.story_line}</div>
-                        
-                        <!-- Add audio controls -->
-                        <div class="audio-controls">
-                            <button class="audio-btn" data-index="${index}">
-                                <i class="fas fa-play"></i>
-                            </button>
-                            <div class="audio-info">Click play to hear narration</div>
-                        </div>
                     </div>
                     <div class="slide-id">${item.id}</div>
                     <div class="credit">Generating image...</div>
@@ -947,6 +1052,8 @@
             
             // Set up navigation
             document.getElementById('back-btn').addEventListener('click', () => {
+                // Stop any current speech when leaving
+                stopCurrentSpeech();
                 storySlides.style.display = 'none';
                 
                 // Clean up generated image URLs to free memory
@@ -961,13 +1068,41 @@
                 });
             });
             
-            // Initialize first slide as active
+            // Initialize first slide as active and start voice
             updateActiveSlide(0);
             
-            // Set up scroll detection
+            // Start speaking the first slide after a short delay
+            setTimeout(() => {
+                if (storyData[0] && storyData[0].story_line) {
+                    speakStoryLine(storyData[0].story_line, 0);
+                }
+            }, 1000);
+            
+            // Set up scroll detection with throttling
+            let scrollTimeout;
             storySlides.addEventListener('scroll', () => {
-                const slideIndex = Math.round(storySlides.scrollTop / window.innerHeight);
-                updateActiveSlide(slideIndex);
+                isScrolling = true;
+                
+                // Clear existing timeout
+                clearTimeout(scrollTimeout);
+                
+                // Set new timeout
+                scrollTimeout = setTimeout(() => {
+                    const slideIndex = Math.round(storySlides.scrollTop / window.innerHeight);
+                    
+                    // Only update if slide actually changed
+                    if (slideIndex !== currentSlideIndex) {
+                        currentSlideIndex = slideIndex;
+                        updateActiveSlide(slideIndex);
+                        
+                        // Start speaking the new slide
+                        if (storyData[slideIndex] && storyData[slideIndex].story_line) {
+                            speakStoryLine(storyData[slideIndex].story_line, slideIndex);
+                        }
+                    }
+                    
+                    isScrolling = false;
+                }, 150); // Throttle scroll events
             });
             
             updateProgress(100);
@@ -1059,6 +1194,16 @@
             if (e.key === 'Enter') handleUserInput();
         });
         
+        // Stop speech when page is about to unload
+        window.addEventListener('beforeunload', () => {
+            stopCurrentSpeech();
+        });
+        
+        // Stop speech when page loses focus
+        window.addEventListener('blur', () => {
+            stopCurrentSpeech();
+        });
+        
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             loadMaterial();
@@ -1068,15 +1213,8 @@
                 addMessage('ai', "Hi there! I'm your learning assistant. Describe what you'd like to learn about and I'll create an engaging visual story for you.");
             }
         });
-        function speakMessage(text) {
-            if (synthesis) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-        synthesis.speak(utterance);
-    }
-}
 
- // Add this helper function to highlight keywords
+        // Add this helper function to highlight keywords
         function highlightKeywords(storyLine, keywordsString) {
             if (!keywordsString) return storyLine;
             
