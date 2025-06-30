@@ -712,20 +712,23 @@
             if (savedMaterials) {
                 materials = JSON.parse(savedMaterials);
             }
-            
-            // Check for new material from camera
-            const newCameraMaterial = localStorage.getItem('newCameraMaterial');
-            if (newCameraMaterial) {
-                const cameraMaterial = JSON.parse(newCameraMaterial);
-                materials.push(cameraMaterial);
-                localStorage.removeItem('newCameraMaterial');
-                saveMaterials();
-                showNotification('Camera material added successfully!', 'success');
-            }
-            
-            renderMaterials();
+    
+    const newCameraMaterial = localStorage.getItem('newCameraMaterial');
+    if (newCameraMaterial) {
+        const cameraMaterial = JSON.parse(newCameraMaterial);
+        
+        // Ensure camera material has content
+        if (!cameraMaterial.content) {
+            cameraMaterial.content = "Image-based content. View details to see visual material.";
         }
-
+        
+        materials.push(cameraMaterial);
+        localStorage.removeItem('newCameraMaterial');
+        saveMaterials();
+    }
+    
+    renderMaterials();
+}
         // Save materials to localStorage
         function saveMaterials() {
             localStorage.setItem('materials', JSON.stringify(materials));
@@ -805,8 +808,12 @@
                         </div>
                         
                         <div class="material-content">
-                            ${material.content.substring(0, 150)}${material.content.length > 150 ? '...' : ''}
-                        </div>
+                           
+                    ${material.content ? 
+                      material.content.substring(0, 150) + 
+                      (material.content.length > 150 ? '...' : '') : 
+                      'No content available'}
+                            </div>
                         
                         <div class="material-footer">
                             <div class="progress-container">
@@ -1059,7 +1066,7 @@
                 }
             } catch (error) {
                 console.error('Error extracting content:', error);
-                return `File uploaded: ${file.name}\nError extracting content: ${error.message}`;
+                return `File uploaded: ${file.name}\nContent extraction failed. Please add content manually.`;
             }
         }
 
@@ -1205,7 +1212,7 @@
                 progress: 0,
                 deadline: formData.deadline
             };
-            
+            content: content || '',  // Ensure content exists
             materials.push(newMaterial);
             saveMaterials();
             renderMaterials();
